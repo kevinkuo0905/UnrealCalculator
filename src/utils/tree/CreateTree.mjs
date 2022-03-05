@@ -28,4 +28,3 @@ export default function createTree(expression) {
     args.map((arg) => createTree(arg))
   )
 }
-

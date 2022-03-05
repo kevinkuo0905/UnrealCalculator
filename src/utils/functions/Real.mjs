@@ -123,6 +123,19 @@ export function ncr(n, r) {
 }
 
 /**
+ * Factors any integer less than 10^16.
+ */
+export const factorInt = (x) => {
+  if (x >= intPow(10, 16)) return [x]
+  let factors = []
+  if (x === 2) return [2]
+  for (let i = 2; i <= sqrt(x) + 1; i++) {
+    if (x % i === 0) return factors.concat(i, factorInt(x / i))
+  }
+  return [x]
+}
+
+/**
  * Greatest common divisor returns 1 for any non-integer.
  */
 const gcd2 = function (n, r) {

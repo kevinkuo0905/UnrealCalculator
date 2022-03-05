@@ -3,12 +3,16 @@
  * TODO: arccsc, arcsec, arccot
  */
 
-import createTree from "../tree/CreateTree.mjs"
-import { parseInput } from "../shared/Parsing.mjs"
-
 import { FunctionError } from "../shared/Errors.mjs"
 import Expression from "../tree/Expression.mjs"
 import * as functions from "../functions/Complex.mjs"
+
+const newExp = (op, args) => {
+  if (!op || op === "identity") return new Expression(null, args)
+  return new Expression(functions[op], args)
+}
+
+const newC = (c) => newExp(null, [c])
 
 export default function diff(tree, variable, implicit = false) {
   const name = tree.operation.name
@@ -16,17 +20,12 @@ export default function diff(tree, variable, implicit = false) {
   return diffRules[name](tree, variable, implicit)
 }
 
-const newExp = (op, args) => {
-  if (!op || op === "identity") return new Expression(null, args)
-  return new Expression(functions[op], args)
-}
-
 const diffRules = {
   identity: ({ args: [arg] }, variable, implicit) => {
-    if (arg === variable) return newExp(null, [[1, 0]])
-    if (Array.isArray(arg) && arg.length === 2) return newExp(null, [[0, 0]])
-    if (implicit) return newExp(null, [`d${arg}/d${variable}`])
-    return newExp(null, [[0, 0]])
+    if (arg === variable) return newC([1, 0])
+    if (Array.isArray(arg) && arg.length === 2) return newC([0, 0])
+    if (implicit) return newC(`d${arg}/d${variable}`)
+    return newC([0, 0])
   },
 
   add: ({ args }, variable, implicit) => {
@@ -84,18 +83,15 @@ const diffRules = {
 
   log: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
-    return newExp("divide", [
-      diffArg,
-      newExp("multiply", [newExp("ln", [newExp(null, [[10, 0]])]), arg]),
-    ])
+    return newExp("divide", [diffArg, newExp("multiply", [newExp("ln", [newC([10, 0])]), arg])])
   },
 
   pow: ({ args }, variable, implicit) => {
-    if (args[1].isConstant()) {
+    if (args[1].isEvaluable()) {
       const diffArg = diff(args[0], variable, implicit)
       return newExp("multiply", [
         args[1],
-        newExp("pow", [args[0], newExp("subtract", [args[1], newExp(null, [[1, 0]])])]),
+        newExp("pow", [args[0], newExp("subtract", [args[1], newC([1, 0])])]),
         diffArg,
       ])
     }
@@ -107,10 +103,7 @@ const diffRules = {
 
   sqrt: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
-    return newExp("divide", [
-      diffArg,
-      newExp("multiply", [newExp(null, [[2, 0]]), newExp("sqrt", [arg])]),
-    ])
+    return newExp("divide", [diffArg, newExp("multiply", [newC([2, 0]), newExp("sqrt", [arg])])])
   },
 
   sin: ({ args: [arg] }, variable, implicit) => {
@@ -120,7 +113,7 @@ const diffRules = {
 
   cos: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
-    return newExp("multiply", [newExp(null, [[-1, 0]]), newExp("sin", [arg]), diffArg])
+    return newExp("multiply", [newC([-1, 0]), newExp("sin", [arg]), diffArg])
   },
 
   tan: ({ args: [arg] }, variable, implicit) => {
@@ -130,12 +123,7 @@ const diffRules = {
 
   csc: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
-    return newExp("multiply", [
-      newExp(null, [[-1, 0]]),
-      newExp("csc", [arg]),
-      newExp("cot", [arg]),
-      diffArg,
-    ])
+    return newExp("multiply", [newC([-1, 0]), newExp("csc", [arg]), newExp("cot", [arg]), diffArg])
   },
 
   sec: ({ args: [arg] }, variable, implicit) => {
@@ -145,31 +133,22 @@ const diffRules = {
 
   cot: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
-    return newExp("multiply", [
-      newExp(null, [[-1, 0]]),
-      newExp("csc", [arg]),
-      newExp("csc", [arg]),
-      diffArg,
-    ])
+    return newExp("multiply", [newC([-1, 0]), newExp("csc", [arg]), newExp("csc", [arg]), diffArg])
   },
 
   arcsin: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
     return newExp("divide", [
       diffArg,
-      newExp("sqrt", [
-        newExp("subtract", [newExp(null, [[1, 0]]), newExp("multiply", [arg, arg])]),
-      ]),
+      newExp("sqrt", [newExp("subtract", [newC([1, 0]), newExp("multiply", [arg, arg])])]),
     ])
   },
 
   arccos: ({ args: [arg] }, variable, implicit) => {
     const diffArg = diff(arg, variable, implicit)
     return newExp("divide", [
-      newExp("multiply", [newExp(null, [[-1, 0]]), diffArg]),
-      newExp("sqrt", [
-        newExp("subtract", [newExp(null, [[1, 0]]), newExp("multiply", [arg, arg])]),
-      ]),
+      newExp("multiply", [newC([-1, 0]), diffArg]),
+      newExp("sqrt", [newExp("subtract", [newC([1, 0]), newExp("multiply", [arg, arg])])]),
     ])
   },
 
@@ -177,7 +156,7 @@ const diffRules = {
     const diffArg = diff(arg, variable, implicit)
     return newExp("divide", [
       diffArg,
-      newExp("add", [newExp(null, [[1, 0]]), newExp("multiply", [arg, arg])]),
+      newExp("add", [newC([1, 0]), newExp("multiply", [arg, arg])]),
     ])
   },
 }

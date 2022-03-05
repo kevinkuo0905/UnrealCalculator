@@ -5,7 +5,6 @@
 
 import { DomainError } from "../shared/Errors.mjs"
 import {
-  isInteger,
   intPow,
   round as roundR,
   max as maxR,
@@ -31,7 +30,7 @@ const inf = Infinity
 const isEqual = (c1, c2) => c1[0] === c2[0] && c1[1] === c2[1]
 
 /**
- * Argument of complex number c also known as atan2
+ * Argument of complex number c, also known as atan2
  * @param {[Number, Number]} c a complex number
  * @returns {Number} a real number only
  */
@@ -139,63 +138,15 @@ export function ncr(n, r) {
   return [ncrR(n[0], r[0]), 0]
 }
 
-const isGaussianInt = (c) => isInteger(c[0]) && isInteger(c[1])
-
-/**
- * Recursively factors any Gaussian integer.
- */
-const factorGaussian = (c) => {
-  if (!isGaussianInt(c)) return c
-  const real = gcdR(c[0], c[1])
-  const complex = [c[0] / gcdR(c[0], c[1]), c[1] / gcdR(c[0], c[1])]
-  const factorInt = (x) => {
-    let factors = []
-    if (x === 2) return [2]
-    for (let i = 2; i <= sqrtR(x) + 1; i++) {
-      if (x % i === 0) {
-        factors.push(i)
-        factors = factors.concat(factorInt(x / i))
-        return factors
-      }
-    }
-    return [x]
-  }
-  return [factorInt(real), complex]
-}
-
 /**
  * Computes the greatest common divisor among the real and imaginary parts.
  */
 const gcd2 = (c1, c2) => {
-  const realA = factorGaussian(c1)[0]
-  const realB = factorGaussian(c2)[0]
-  const complexA = factorGaussian(c1)[1]
-  const complexB = factorGaussian(c2)[1]
-  let gcd = [1, 0]
-  let common = [[1], []]
-  for (let i = 0; i < realA.length; i++) {
-    for (let j = 0; j < realB.length; j++) {
-      if (realA[i] === realB[j]) {
-        common[0].push(realA[i])
-        realA[i] = 1
-        realB[j] = 1
-      }
-    }
+  if (divide(c1, c2)[1] === 0) {
+    if (c1[0] > c2[0]) return c2
+    return c1
   }
-  if (isEqual(complexA, complexB) || isEqual(multiply(complexA, [-1, 0]), complexB)) {
-    common[1] = complexA
-  } else {
-    common[1] = [1, 0]
-  }
-  for (let i = 0; i < common[0].length; i++) {
-    gcd[0] *= common[0][i]
-  }
-  gcd = multiply(gcd, common[1])
-  if (gcd[0] < 0) {
-    gcd[0] *= -1
-    gcd[1] *= -1
-  }
-  return gcd
+  return [gcdR(c1[0], c1[1], c2[0], c2[1]), 0]
 }
 
 export function gcd(...c) {

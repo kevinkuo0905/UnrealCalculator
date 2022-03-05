@@ -85,7 +85,7 @@ const verifyInput = (userInput) => {
       !(match[0] === "Infinity" || match[0] === "e" || match[0] === "pi") &&
       userInput[match.index + match[0].length] !== "("
     )
-      throw new SyntaxError(`Variables must be a single character.`)
+      throw new SyntaxError(`Variable: ${match[0]} must be a single character.`)
   }
   let i = 0
   let j = 0
@@ -312,4 +312,30 @@ export const parseInput = (userInput) => {
   userInput = parseComplexOp(userInput, "-", "subtract")
   userInput = parseComplexOp(userInput, "+", "add")
   return parseGroups(userInput)
+}
+
+
+/**
+ * Parses complex numbers in array form back to a+bi form.
+ * @param {[Number, Number]} c 
+ * @returns {String}
+ */
+export const displayComplex = (c) => {
+  if (isNaN(c[0]) || isNaN(c[1])) {
+    return "undefined"
+  } else if (c[1] === 0) {
+    return `${c[0]}`
+  } else if (c[0] === 0) {
+    if (c[1] === 1) {
+      return "i"
+    } else if (c[1] === -1) {
+      return "-i"
+    } else {
+      return `${c[1]}i`
+    }
+  } else if (c[1] > 0) {
+    return c[1] === 1 ? `${c[0]}+i` : `${c[0]}+${c[1]}i`
+  } else {
+    return c[1] === -1 ? `${c[0]}-i` : `${c[0]}-${-c[1]}i`
+  }
 }

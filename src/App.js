@@ -1,34 +1,30 @@
-import React, { useState, useEffect } from "react"
-import { parseInput } from "./utils/shared/Parsing.mjs"
-import createTree from "./utils/tree/CreateTree.mjs"
-import diff from "./utils/special-functions/Differentiation.mjs"
+import React from "react"
+import { MathJaxContext } from "better-react-mathjax"
+import Panels from "./components/Panels"
+import Grapher from "./grapher/Grapher"
+import Calculator from "./calculator/Calculator"
+import "./App.css"
 
 function App() {
-  const [userInput, setUserInput] = useState("x^2")
-  const [output, setOutput] = useState("")
-  const [error, setError] = useState({ name: null, message: null })
-  useEffect(() => {
-    try {
-      setOutput(createTree(parseInput(userInput)).evaluate().toString())
-      setError({ name: null, message: null })
-    } catch (e) {
-      if (e) setError(e)
-    }
-  }, [userInput])
+  const src = "/assets/mathjax/tex-mml-chtml.js"
+  const config = {
+    loader: { load: ["input/asciimath"] },
+    asciimath: { displaystyle: true, delimiters: [["$", "$"]] },
+    options: { enableMenu: false },
+  }
 
   return (
-    <main>
-      <input
-        onChange={({ target }) => setUserInput(target.value)}
-        type="text"
-        id="user-input"
-        name="user-input"
-        value={userInput}
-      />
-
-      <p>{output}</p>
-      <p>{error.name ? `${error.name}: ${error.message}` : null}</p>
-    </main>
+    <MathJaxContext src={src} config={config}>
+      <div id="container">
+        <header></header>
+        <main>
+          <Panels percentage={70} minRatio={50} maxRatio={80}>
+            <Grapher />
+            <Calculator />
+          </Panels>
+        </main>
+      </div>
+    </MathJaxContext>
   )
 }
 
