@@ -1,5 +1,6 @@
 import { NonrealError } from "../shared/Errors.mjs"
 import { e, pi } from "../functions/Real.mjs"
+import * as symbolics from "../symbolic-functions/Symbolic.mjs"
 
 const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
 
@@ -9,7 +10,7 @@ const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
  * @param {[(String | Number), Number] | String} x
  * @returns {[Number, Number] | String}
  */
-export const identity = (x) => {
+const identity = (x) => {
   if (Array.isArray(x) && x.length === 2) {
     if (x[0] === "pi") return [pi, 0]
     if (x[0] === "e") return [e, 0]
@@ -46,6 +47,7 @@ export default class Expression {
 
   evaluate({ degreeMode = false, complexMode = true } = {}, variable, c) {
     const { operation, args } = this
+    if (symbolics[operation.name]) return operation(...args)
     if (operation !== identity) {
       const mappedArgs = args.map((arg) => arg.evaluate({ degreeMode, complexMode }, variable, c))
       const evaluation = trigFunctions.some((func) => operation.name.includes(func))
@@ -56,6 +58,7 @@ export default class Expression {
     }
     const arg = args[0]
     if (typeof arg === "string") {
+      if (arg.length === 0) throw new EvalError("Missing argument in function.")
       if (!variable) throw new EvalError(`${arg} is a variable.`)
       if (arg !== variable) throw new EvalError(`This is a function of ${arg}.`)
       if (!c) throw new EvalError(`No value provided for ${arg}.`)

@@ -1,20 +1,27 @@
 import React from "react"
 import Panels from "../components/Panels"
+import "./Grapher.css"
 
 export default function Grapher() {
+  const panelsConfig = {
+    percentage: 25,
+    minRatio: 20,
+    maxRatio: 50,
+    alwaysShowSecond: true,
+    autoRotate: true,
+  }
+
+
   return (
-    <Panels percentage={25} minRatio={20} maxRatio={50} alwaysShowSecond>
-      <Panels vertical percentage={50} minRatio={20} maxRatio={80} alwaysShowFirst alwaysShowSecond>
+    <div className="flex-fill-container">
+      <Panels config={panelsConfig}>
         <div style={{ backgroundColor: "orange" }} className="flex-fill-container">
-          123
+
         </div>
-        <div style={{ backgroundColor: "green" }} className="flex-fill-container">
-          123
+        <div style={{ backgroundColor: "lightgrey" }} className="flex-fill-container">
+
         </div>
       </Panels>
-      <div style={{ backgroundColor: "lightgrey" }} className="flex-fill-container">
-        123
-      </div>
-    </Panels>
+    </div>
   )
 }

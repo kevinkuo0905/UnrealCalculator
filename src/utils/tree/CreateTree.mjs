@@ -1,8 +1,8 @@
 import { FunctionError } from "../shared/Errors.mjs"
 import Expression from "./Expression.mjs"
-import { parseExp } from "../shared/Parsing.mjs"
+import { parseExp, parseInput } from "../shared/Parsing.mjs"
 import * as functions from "../functions/Complex.mjs"
-import * as specials from "../special-functions/Special.mjs"
+import * as symbolics from "../symbolic-functions/Symbolic.mjs"
 
 /**
  * Recursively adds Expressions until an argument is a single variable or complex number.
@@ -22,9 +22,10 @@ export default function createTree(expression) {
     }
     return new Expression(null, args)
   }
-  if (!functions[name] && !specials[name]) throw new FunctionError(`${name} is not supported.`)
+  if (!functions[name] && !symbolics[name])
+    throw new FunctionError(`Function: ${name} is not supported.`)
   return new Expression(
-    functions[name] || specials[name],
+    functions[name] || symbolics[name],
     args.map((arg) => createTree(arg))
   )
 }

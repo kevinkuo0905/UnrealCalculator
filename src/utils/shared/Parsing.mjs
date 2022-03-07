@@ -1,6 +1,6 @@
 /*
  * Parsing functions to verify syntax and parse user input into valid Expressions.
- * TODO: parse absolute value
+ * TODO: parse absolute value, round as string
  */
 
 /**
@@ -21,6 +21,9 @@ const parseConst = (userInput) =>
     .replace(/(?<=\()\((\[[^,]+,[^,]+\])\)(?=,)/g, "$1")
     .replace(/(?<=,)\((\[[^,]+,[^,]+\])\)(?=,)/g, "$1")
     .replace(/(?<=,)\((\[[^,]+,[^,]+\])\)(?=\))/g, "$1")
+    .replace(/(?<=\()\(([a-z])\)(?=,)/g, "$1")
+    .replace(/(?<=,)\(([a-z])\)(?=,)/g, "$1")
+    .replace(/(?<=,)\(([a-z])\)(?=\))/g, "$1")
 
 /**
  * Checks nested parentheses in a function and finds the matching close.
@@ -56,7 +59,7 @@ const matchParen = (userInput, index, leftToRight = true) => {
       i++
     }
   }
-  if (j !== -1) throw new SyntaxError("Mismatched parentheses")
+  if (j !== -1) throw new SyntaxError("Mismatched parentheses.")
   return parenIndex
 }
 
@@ -94,10 +97,12 @@ const verifyInput = (userInput) => {
     if (userInput[i] === ")") j--
     i++
   }
-  if (j !== 0) throw new SyntaxError("Mismatched parentheses")
-  return userInput[0] === "(" && matchParen(userInput, 0) === userInput.length - 1
-    ? userInput.slice(1, -1)
-    : userInput
+  if (j !== 0) throw new SyntaxError("Mismatched parentheses.")
+  if (userInput[0] === "(" && matchParen(userInput, 0) === userInput.length - 1) {
+    userInput = userInput.slice(1, -1)
+  }
+  if (userInput.length === 0) throw new SyntaxError("Enter something...")
+  return userInput
 }
 
 /**
@@ -314,10 +319,9 @@ export const parseInput = (userInput) => {
   return parseGroups(userInput)
 }
 
-
 /**
  * Parses complex numbers in array form back to a+bi form.
- * @param {[Number, Number]} c 
+ * @param {[Number, Number]} c
  * @returns {String}
  */
 export const displayComplex = (c) => {

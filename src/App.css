@@ -8,15 +8,3 @@
   flex-direction: column;
   overflow: hidden;
 }
-
-header {
-  min-height: 40px;
-  height: 5%;
-  background-color: lightblue;
-}
-
-main {
-  display: flex;
-  height: 95%;
-  font-size:20px
-}

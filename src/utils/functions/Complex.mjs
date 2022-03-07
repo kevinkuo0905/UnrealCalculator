@@ -121,7 +121,9 @@ export function ceil(c) {
   return [ceilR(c[0]), ceilR(c[1])]
 }
 
-const round = (c, n) => [roundR(c[0], n), roundR(c[1], n)]
+export function round(c, n) {
+  return [roundR(c[0], n), roundR(c[1], n)]
+}
 
 export function fac(c) {
   if (round(c, 12)[1] !== 0) throw new DomainError("Real numbers only.")
