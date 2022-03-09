@@ -33,12 +33,12 @@ export default function Calculator() {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
       try {
-        const result = createTree(parseInput(userInput)).evaluate().toString()
-        console.log(result)
+        const result = createTree(parseInput(userInput)).evaluate()
+        console.log(result.toString())
         if (Array.isArray(result)) {
           setOutput(displayComplex(round(result, 10)))
         } else {
-          setOutput(result)
+          setOutput(result.toString())
         }
         setError({ name: null, message: null })
       } catch (err) {

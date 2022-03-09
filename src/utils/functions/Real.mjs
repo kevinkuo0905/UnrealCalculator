@@ -7,9 +7,7 @@ import { DomainError } from "../shared/Errors.mjs"
 
 const inf = Infinity
 
-export const isInteger = (x) => floor(x) === x
-
-const sgn = (x) => {
+export const sgn = (x) => {
   if (x > 0) return 1
   if (x < 0) return -1
   return 0
@@ -45,6 +43,8 @@ export function floor(x) {
   return x < 1 && x >= 0 ? 0 : x - (((x % 1) + 1) % 1)
 }
 
+export const isInteger = (x) => floor(x) === x
+
 export function ceil(x) {
   return isInteger(x) ? x : floor(x) + 1
 }
@@ -70,29 +70,26 @@ export const intPow = (x, y) => {
  */
 export const round = (x, n) => {
   if (abs(x) === inf) return x
+  let digits = 1
   if (abs(x) >= 1) {
-    let d = 1
-    for (let i = 0; i < d; i++) {
-      x /= 10
-      if (x >= 1) d++
+    let a = x
+    for (let i = 0; i < digits; i++) {
+      a /= 10
+      if (a >= 1) digits++
     }
-    x *= intPow(10, d)
-    if (x * intPow(10, n - d) - floor(x * intPow(10, n - d)) >= 0.5) {
-      return (floor(x * intPow(10, n - d)) + 1) / intPow(10, n - d)
-    }
-    return floor(x * intPow(10, n - d)) / intPow(10, n - d)
   }
-  if (x * intPow(10, n) - floor(x * intPow(10, n)) >= 0.5) {
-    return (floor(x * intPow(10, n)) + 1) / intPow(10, n)
+  const accuracy = abs(x) >= 1 ? intPow(10, n - digits) : intPow(10, n)
+  if (x * accuracy - floor(x * accuracy) >= 0.5) {
+    return (floor(x * accuracy) + 1) / accuracy
   }
-  return floor(x * intPow(10, n)) / intPow(10, n)
+  return floor(x * accuracy) / accuracy
 }
 
 /**
  * Factorial domain is limited to nonnegative integers.
  */
 export function fac(n) {
-  n = round(n, 12)
+  n = round(n, 15)
   if (n < 0 || !isInteger(n)) throw new DomainError("Nonnegative integers only.")
   let prod = 1
   for (let i = 1; i <= n; i++) {
@@ -105,7 +102,7 @@ export function fac(n) {
  * Permutation domain is limited to nonnegative integers.
  */
 export function npr(n, r) {
-  if (n < 0 || !isInteger(round(n, 12)) || r < 0 || !isInteger(round(r, 12)))
+  if (n < 0 || !isInteger(round(n, 15)) || r < 0 || !isInteger(round(r, 15)))
     throw new DomainError("Nonnegative integers only.")
   if (r > n) throw new DomainError("r cannot be greater than n.")
   let prod = 1
@@ -192,7 +189,7 @@ const lnT = (x) => {
   for (let i = 1; i < 26; i++) {
     sum += intPow(1 - x, i) / i
   }
-  return -sum
+  return 0 - sum
 }
 
 /**
@@ -237,37 +234,37 @@ export function log(x) {
  * Uses e^(y*lnx) to calculate x^y. Non-integer powers of negative numbers return NaN.
  */
 export function pow(x, y) {
-  const xR = round(x, 14)
-  const yR = round(y, 14)
+  x = round(x, 15)
+  y = round(y, 15)
   if (x === inf) {
-    if (yR > 0) return inf
-    if (yR < 0) return 0
+    if (y > 0) return inf
+    if (y < 0) return 0
     return NaN
   }
   if (x === 1) {
     if (abs(y) !== inf) return 1
     return NaN
   }
-  if (xR === 0) {
-    if (yR > 0) return 0
-    if (yR === 0) return 1
-    if (yR < 0) return inf
+  if (x === 0) {
+    if (y > 0) return 0
+    if (y === 0) return NaN
+    if (y < 0) return inf
     return NaN
   }
-  if (yR > intPow(10, 8)) {
-    if (xR > 1.01) return inf
-    if (xR > 0 && xR < 1) return 0
-    if (xR < 0) return NaN
+  if (y > intPow(10, 8)) {
+    if (x > 1.01) return inf
+    if (x > 0 && x < 1) return 0
+    if (x < 0) return NaN
   }
-  if (yR < -intPow(10, 8)) {
-    if (xR > 1.01) return 0
-    if (xR >= 0 && xR < 1) return inf
-    if (xR < 0) return NaN
+  if (y < -intPow(10, 8)) {
+    if (x > 1.01) return 0
+    if (x >= 0 && x < 1) return inf
+    if (x < 0) return NaN
   }
-  if ((abs(xR) > 1.01 || abs(xR) < 1) && isInteger(yR)) {
-    return intPow(x, yR)
+  if ((abs(x) > 1.01 || abs(x) < 1) && isInteger(y)) {
+    return intPow(x, y)
   }
-  if (xR > 0) {
+  if (x > 0) {
     return exp(y * ln(x))
   }
   return NaN
@@ -343,15 +340,15 @@ const sinT = (x) => {
 }
 
 /**
- * Converts to [-pi,pi] if necessary. Uses identity sin(x)=sin(x-2pi*k).
+ * Converts to [-pi/2,pi/2] if necessary. Uses identity sin(x)=sin(x-2pi*k).
  */
 export function sin(x, degreeMode = false) {
   x *= degreeMode ? pi / 180 : 1
   if (isNaN(x) || abs(x) === inf) return NaN
-  if (abs(x) < pi) return sinT(x)
   let reduced = x % (2 * pi)
   if (abs(reduced) > pi) reduced -= sgn(x) * 2 * pi
-  return round(sinT(reduced), 12) === 0 ? 0 : sinT(reduced)
+  if (abs(reduced) > pi / 2) reduced = sgn(x) * pi - reduced
+  return round(sinT(reduced), 15)
 }
 
 export function cos(x, degreeMode = false) {

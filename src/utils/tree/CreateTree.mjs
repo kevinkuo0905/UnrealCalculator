@@ -1,13 +1,13 @@
 import { FunctionError } from "../shared/Errors.mjs"
 import Expression from "./Expression.mjs"
-import { parseExp, parseInput } from "../shared/Parsing.mjs"
+import { parseExp } from "../shared/Parsing.mjs"
 import * as functions from "../functions/Complex.mjs"
-import * as symbolics from "../symbolic-functions/Symbolic.mjs"
+import * as symbolics from "../functions/Symbolic.mjs"
 
 /**
  * Recursively adds Expressions until an argument is a single variable or complex number.
  * The identity function is named as the operation for these arguments.
- * @param {string} expression a parsed expression string
+ * @param {String} expression a parsed expression string
  * @returns {Expression} an Expression object from the parsed expression string
  */
 export default function createTree(expression) {

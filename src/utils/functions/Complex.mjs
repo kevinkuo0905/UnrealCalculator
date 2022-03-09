@@ -35,20 +35,20 @@ const isEqual = (c1, c2) => c1[0] === c2[0] && c1[1] === c2[1]
  * @returns {Number} a real number only
  */
 const arg = (c) => {
-  if (c[0] === 0 && c[1] > 0) return pi / 2
-  if (c[0] === 0 && c[1] < 0) return -pi / 2
-  if (c[0] > 0 && c[1] !== 0) return arctanR(c[1] / c[0])
-  if (c[0] > 0 && c[1] === 0) return 0
-  if (c[0] < 0 && c[1] >= 0) return arctanR(c[1] / c[0]) + pi
-  if (c[0] < 0 && c[1] < 0) return arctanR(c[1] / c[0]) - pi
-  return NaN
+  if (c[0] === 0 && c[1] > 0) return [pi / 2, 0]
+  if (c[0] === 0 && c[1] < 0) return [-pi / 2, 0]
+  if (c[0] > 0 && c[1] !== 0) return [arctanR(c[1] / c[0]), 0]
+  if (c[0] > 0 && c[1] === 0) return [0, 0]
+  if (c[0] < 0 && c[1] >= 0) return [arctanR(c[1] / c[0]) + pi, 0]
+  if (c[0] < 0 && c[1] < 0) return [arctanR(c[1] / c[0]) - pi, 0]
+  return [NaN, NaN]
 }
 
 export function abs(c) {
   return [sqrtR(c[0] * c[0] + c[1] * c[1]), 0]
 }
 
-const toPolar = (c) => [abs(c)[0], arg(c)]
+const toPolar = (c) => [abs(c)[0], arg(c)[0]]
 
 const toRect = (z) => {
   if (cosR(z[1]) === 0) return [0, z[0] * sinR(z[1])]
@@ -103,14 +103,14 @@ export function divide(c1, c2) {
   ]
 }
 
-export function max(...n) {
-  if (n.some((arg) => arg[1] !== 0)) throw new DomainError("Real numbers only.")
-  return [maxR(...n.map((arg) => arg[0])), 0]
+export function max(...c) {
+  if (c.some((num) => num[1] !== 0)) throw new DomainError("Real numbers only.")
+  return [maxR(...c.map((num) => num[0])), 0]
 }
 
-export function min(...n) {
-  if (n.some((arg) => arg[1] !== 0)) throw new DomainError("Real numbers only.")
-  return [minR(...n.map((arg) => arg[0])), 0]
+export function min(...c) {
+  if (c.some((num) => num[1] !== 0)) throw new DomainError("Real numbers only.")
+  return [minR(...c.map((num) => num[0])), 0]
 }
 
 export function floor(c) {
@@ -166,7 +166,7 @@ export function exp(c) {
 
 export function ln(c) {
   if (abs(c)[0] === inf) return [inf, 0]
-  return [lnR(abs(c)[0]), arg(c)]
+  return [lnR(abs(c)[0]), arg(c)[0]]
 }
 
 export function log(c) {
@@ -175,39 +175,39 @@ export function log(c) {
 
 export function pow(c1, c2) {
   const z = []
-  const c1R = round(c1, 14)
-  const c2R = round(c2, 14)
-  if (c1R[1] === 0 && c2R[1] === 0 && c1R[0] > 0) {
+  c1 = round(c1, 15)
+  c2 = round(c2, 15)
+  if (c1[1] === 0 && c2[1] === 0 && c1[0] > 0) {
     return [powR(c1[0], c2[0]), 0]
   }
-  if (isEqual(c1R, [0, 0])) {
-    if (c2R[0] > 0) return [0, 0]
-    if (c2R[0] === 0) return [1, 0]
-    if (c2R[0] < 0) return [inf, 0]
+  if (isEqual(c1, [0, 0])) {
+    if (c2[0] > 0) return [0, 0]
+    if (c2[0] === 0) return [NaN, NaN]
+    if (c2[0] < 0) return [inf, 0]
     return [NaN, NaN]
   }
-  if (c2R[0] > intPow(10, 14)) {
-    if (abs(c1R)[0] > 1) return [inf, 0]
-    if (abs(c1R)[0] >= 0 && abs(c1R)[0] < 1) return [0, 0]
+  if (c2[0] > intPow(10, 15)) {
+    if (abs(c1)[0] > 1) return [inf, 0]
+    if (abs(c1)[0] >= 0 && abs(c1)[0] < 1) return [0, 0]
     return [NaN, NaN]
   }
-  if (c2R[0] < -intPow(10, 14)) {
-    if (abs(c1R)[0] > 1) return [0, 0]
-    if (abs(c1R)[0] >= 0 && abs(c1R)[0] < 1) return [inf, 0]
+  if (c2[0] < -intPow(10, 15)) {
+    if (abs(c1)[0] > 1) return [0, 0]
+    if (abs(c1)[0] >= 0 && abs(c1)[0] < 1) return [inf, 0]
     return [NaN, NaN]
   }
-  z[0] = powR(abs(c1)[0], c2[0]) * expR(-c2[1] * arg(c1))
+  z[0] = powR(abs(c1)[0], c2[0]) * expR(-c2[1] * arg(c1)[0])
   if (c2[1] === 0) {
-    z[1] = c2[0] * arg(c1)
+    z[1] = c2[0] * arg(c1)[0]
   } else {
-    z[1] = c2[0] * arg(c1) + c2[1] * lnR(abs(c1)[0])
+    z[1] = c2[0] * arg(c1)[0] + c2[1] * lnR(abs(c1)[0])
   }
   return toRect(z)
 }
 
 export function sqrt(c) {
   if (c[1] === 0 && c[0] > 0) return [sqrtR(c[0]), 0]
-  return toRect([sqrtR(toPolar(c)[0]), arg(c) / 2])
+  return toRect([sqrtR(toPolar(c)[0]), arg(c)[0] / 2])
 }
 
 export function arctan(c, degreeMode = false) {

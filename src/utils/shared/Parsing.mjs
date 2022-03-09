@@ -18,12 +18,9 @@ const parseConst = (userInput) =>
     .replace(/(?<![a-df-hj-z])e(?!(?<=\de)[+-]\d{1,3}|[a-df-oq-z])/g, "([e,0])")
     .replace(/(?<![a-hj-z])pi(?![a-oq-z])/g, "([pi,0])")
     .replace(/(?<!\w)([a-df-hj-z])(?!\w)/g, "($1)")
-    .replace(/(?<=\()\((\[[^,]+,[^,]+\])\)(?=,)/g, "$1")
-    .replace(/(?<=,)\((\[[^,]+,[^,]+\])\)(?=,)/g, "$1")
-    .replace(/(?<=,)\((\[[^,]+,[^,]+\])\)(?=\))/g, "$1")
-    .replace(/(?<=\()\(([a-z])\)(?=,)/g, "$1")
-    .replace(/(?<=,)\(([a-z])\)(?=,)/g, "$1")
-    .replace(/(?<=,)\(([a-z])\)(?=\))/g, "$1")
+    .replace(/(?<=\()\((\[[^,]+,[^,]+\]|[a-z])\)(?=,)/g, "$1")
+    .replace(/(?<=,)\((\[[^,]+,[^,]+\]|[a-z])\)(?=,)/g, "$1")
+    .replace(/(?<=,)\((\[[^,]+,[^,]+\]|[a-z])\)(?=\))/g, "$1")
 
 /**
  * Checks nested parentheses in a function and finds the matching close.
@@ -59,7 +56,7 @@ const matchParen = (userInput, index, leftToRight = true) => {
       i++
     }
   }
-  if (j !== -1) throw new SyntaxError("Mismatched parentheses.")
+  if (j !== -1) throw new SyntaxError("Syntax Error")
   return parenIndex
 }
 
@@ -187,10 +184,10 @@ const parseBinaryOp = (userInput, opName, opIndex) => {
  * @returns {String} parsed userInput
  */
 const parseFactorial = (userInput) => {
-  let opIndex = userInput.lastIndexOf("!")
+  let opIndex = userInput.indexOf("!")
   while (opIndex !== -1) {
     userInput = parseUnaryOp(userInput, "fac", opIndex) + userInput.slice(opIndex + 1)
-    opIndex = userInput.lastIndexOf("!")
+    opIndex = userInput.indexOf("!")
   }
   return userInput
 }

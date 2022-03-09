@@ -1,6 +1,6 @@
 import { NonrealError } from "../shared/Errors.mjs"
 import { e, pi } from "../functions/Real.mjs"
-import * as symbolics from "../symbolic-functions/Symbolic.mjs"
+import * as symbolics from "../functions/Symbolic.mjs"
 
 const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
 
@@ -11,7 +11,7 @@ const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
  * @returns {[Number, Number] | String}
  */
 const identity = (x) => {
-  if (Array.isArray(x) && x.length === 2) {
+  if (Array.isArray(x)) {
     if (x[0] === "pi") return [pi, 0]
     if (x[0] === "e") return [e, 0]
   }
@@ -29,7 +29,7 @@ export default class Expression {
   /**
    * @param {Function} operation
    *  mathematical function or operation, null operation is replaced with the identity function
-   * @param {[[any] | String | Expression]} args
+   * @param {[Array | String | Expression]} args
    *  array of complex numbers, strings, or Expressions
    */
   constructor(operation, args) {
@@ -37,10 +37,10 @@ export default class Expression {
     this.args = args
   }
 
-  get leaves() {
+  get complexity() {
     const { operation, args } = this
     if (operation !== identity) {
-      return args.reduce((acc, subtree) => acc + subtree.leaves, 0)
+      return args.reduce((acc, subtree) => acc + subtree.complexity, 1)
     }
     return 1
   }
@@ -50,6 +50,13 @@ export default class Expression {
     if (symbolics[operation.name]) return operation(...args)
     if (operation !== identity) {
       const mappedArgs = args.map((arg) => arg.evaluate({ degreeMode, complexMode }, variable, c))
+      if (mappedArgs.some((arg) => arg instanceof Expression)) {
+        const unMappedArgs = mappedArgs.map((arg) => {
+          if (arg instanceof Expression) return arg
+          return new Expression(null, [arg])
+        })
+        return new Expression(operation, unMappedArgs)
+      }
       const evaluation = trigFunctions.some((func) => operation.name.includes(func))
         ? operation(...mappedArgs, degreeMode)
         : operation(...mappedArgs)
@@ -59,8 +66,7 @@ export default class Expression {
     const arg = args[0]
     if (typeof arg === "string") {
       if (arg.length === 0) throw new EvalError("Missing argument in function.")
-      if (!variable) throw new EvalError(`${arg} is a variable.`)
-      if (arg !== variable) throw new EvalError(`This is a function of ${arg}.`)
+      if (!variable) return this
       if (!c) throw new EvalError(`No value provided for ${arg}.`)
       return operation(c)
     }
@@ -87,11 +93,12 @@ export default class Expression {
     return only ? this.args.every(argIsCorrectVar) : this.args.some(argIsCorrectVar)
   }
 
-  isEvaluable() {
-    return this.args.every((arg) => {
-      if (arg instanceof Expression) return arg.isEvaluable()
-      return !(typeof arg === "string")
-    })
+  isNumber() {
+    try {
+      return Array.isArray(this.evaluate())
+    } catch (err) {
+      if (err) return false
+    }
   }
 
   isIdenticalTo({ operation, args }) {
