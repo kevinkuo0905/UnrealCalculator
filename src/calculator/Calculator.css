@@ -22,8 +22,9 @@ input {
 
 .return {
   min-width: 32px;
-  height: 32px;
+  min-height: 32px;
   border-radius: 5px;
+  margin-right:10px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,6 +35,7 @@ input {
 }
 
 img {
+  user-select: none;
   pointer-events: none;
 }
 
@@ -42,16 +44,16 @@ img {
   flex-direction: column;
   padding: 10px;
   border-bottom: 1px solid grey;
-  transform: scaleY(1);    
+  transform: scaleY(1);
   transform-origin: top;
-  transition: transform 0.2s 
+  transition: transform 0.2s;
 }
 
 .hidden {
   border-bottom: none;
   transform: scaleY(0);
-  height:0px;
-  padding: 0px;
+  height: 0px;
+  padding: 0px 10px;
 }
 
 div.output > span:last-child {

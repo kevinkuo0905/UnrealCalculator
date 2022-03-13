@@ -22,10 +22,14 @@ export default function createTree(expression) {
     }
     return new Expression(null, args)
   }
-  if (!functions[name] && !symbolics[name])
-    throw new FunctionError(`Function: ${name} is not supported.`)
+  //if (!functions[name] && !symbolics[name])
+  //throw new FunctionError(`Function: ${name} is not supported.`)
   return new Expression(
-    functions[name] || symbolics[name],
+    functions[name] ||
+      symbolics[name] ||
+      function badFunction() {
+        throw new FunctionError(`Function: ${name} is not supported.`)
+      },
     args.map((arg) => createTree(arg))
   )
 }

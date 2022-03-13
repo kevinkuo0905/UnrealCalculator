@@ -3,16 +3,9 @@
  * TODO: arccsc, arcsec, arccot
  */
 
-import { FunctionError } from "./Errors.mjs"
+import { FunctionError, DomainError } from "./Errors.mjs"
 import Expression from "../tree/Expression.mjs"
 import * as functions from "../functions/Complex.mjs"
-
-const newExp = (op, args) => {
-  if (!op) return new Expression(null, args)
-  return new Expression(functions[op], args)
-}
-
-const newC = (c) => newExp(null, [c])
 
 /**
  * Recursively differentiates until the identity function is reached.
@@ -22,25 +15,34 @@ const newC = (c) => newExp(null, [c])
  */
 export default function differentiate(tree) {
   const name = tree.operation.name
-  if (!diffRules[name]) {
+  if (!rules[name]) {
     if (tree.isNumber()) return newC([0, 0])
     const evaluation = tree.evaluate()
-    if (evaluation.isIdenticalTo(tree)) throw new FunctionError(`${name} is not differentiable.`)
+    if (evaluation.isIdenticalTo(tree))
+      throw new FunctionError(`Function: ${name} is not differentiable.`)
     return differentiate(evaluation)
   }
   if (name !== "identity")
     tree.args = tree.args.map((arg) => {
-      if (!diffRules[arg.operation.name]) {
+      if (!rules[arg.operation.name]) {
         if (arg.isNumber()) return newC(arg.evaluate())
         return arg.evaluate()
       }
       return arg
     })
-  return diffRules[name](tree)
+  return rules[name](tree)
 }
 
-const diffRules = {
+const newExp = (op, args) => {
+  if (!op) return new Expression(null, args)
+  return new Expression(functions[op], args)
+}
+
+const newC = (c) => newExp(null, [c])
+
+const rules = {
   identity: ({ args: [arg] }) => {
+    if (arg === "") throw new DomainError("Missing operand or argument.")
     if (Array.isArray(arg)) return newC([0, 0])
     return newC(`d${arg}`)
   },

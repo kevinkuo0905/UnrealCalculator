@@ -79,9 +79,7 @@ export const round = (x, n) => {
     }
   }
   const accuracy = abs(x) >= 1 ? intPow(10, n - digits) : intPow(10, n)
-  if (x * accuracy - floor(x * accuracy) >= 0.5) {
-    return (floor(x * accuracy) + 1) / accuracy
-  }
+  if (x * accuracy - floor(x * accuracy) >= 0.5) return (floor(x * accuracy) + 1) / accuracy
   return floor(x * accuracy) / accuracy
 }
 
@@ -91,6 +89,7 @@ export const round = (x, n) => {
 export function fac(n) {
   n = round(n, 15)
   if (n < 0 || !isInteger(n)) throw new DomainError("Nonnegative integers only.")
+  if (n > 175) return inf
   let prod = 1
   for (let i = 1; i <= n; i++) {
     prod *= i
@@ -160,20 +159,20 @@ export function gcd(...n) {
  */
 const expT = (x) => {
   let sum = 0
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 23; i++) {
     sum += intPow(x, i) / fac(i)
   }
   return sum
 }
 
 /**
- * Converts argument to [-1,1] if necessary. Uses identity e^x=(e^(x/ceil(x)))^ceil(x).
+ * Converts argument to [-2,2] if necessary. Uses identity e^x=(e^(x/ceil(x/2)))^ceil(x/2).
  */
 export function exp(x) {
   if (x > 1000) return inf
   if (x === -inf) return 0
   if (x === 0) return 1
-  return intPow(expT(x / ceil(sgn(x) * x)), ceil(sgn(x) * x))
+  return intPow(expT(x / ceil((sgn(x) * x) / 2)), ceil((sgn(x) * x) / 2))
 }
 
 /**
@@ -234,37 +233,37 @@ export function log(x) {
  * Uses e^(y*lnx) to calculate x^y. Non-integer powers of negative numbers return NaN.
  */
 export function pow(x, y) {
-  x = round(x, 15)
-  y = round(y, 15)
-  if (x === inf) {
-    if (y > 0) return inf
-    if (y < 0) return 0
+  const a = round(x, 15)
+  const b = round(y, 15)
+  if (a === inf) {
+    if (b > 0) return inf
+    if (b < 0) return 0
     return NaN
   }
-  if (x === 1) {
-    if (abs(y) !== inf) return 1
+  if (a === 1) {
+    if (abs(b) !== inf) return 1
     return NaN
   }
-  if (x === 0) {
-    if (y > 0) return 0
-    if (y === 0) return NaN
-    if (y < 0) return inf
+  if (a === 0) {
+    if (b > 0) return 0
+    if (b === 0) return NaN
+    if (b < 0) return inf
     return NaN
   }
-  if (y > intPow(10, 8)) {
-    if (x > 1.01) return inf
-    if (x > 0 && x < 1) return 0
-    if (x < 0) return NaN
+  if (b > intPow(10, 8)) {
+    if (a > 1.01) return inf
+    if (a > 0 && a < 1) return 0
+    if (a < 0) return NaN
   }
-  if (y < -intPow(10, 8)) {
-    if (x > 1.01) return 0
-    if (x >= 0 && x < 1) return inf
-    if (x < 0) return NaN
+  if (b < -intPow(10, 8)) {
+    if (a > 1.01) return 0
+    if (a >= 0 && a < 1) return inf
+    if (a < 0) return NaN
   }
-  if ((abs(x) > 1.01 || abs(x) < 1) && isInteger(y)) {
-    return intPow(x, y)
+  if ((abs(a) > 1.01 || abs(a) < 1) && isInteger(b)) {
+    return intPow(x, b)
   }
-  if (x > 0) {
+  if (a > 0) {
     return exp(y * ln(x))
   }
   return NaN

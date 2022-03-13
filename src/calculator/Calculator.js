@@ -1,19 +1,22 @@
 import React, { useRef, useState, useLayoutEffect } from "react"
 import { MathJax } from "better-react-mathjax"
-import { parseInput, displayComplex } from "../utils/shared/Parsing.mjs"
+import { parseInput } from "../utils/shared/Parsing.mjs"
 import createTree from "../utils/tree/CreateTree.mjs"
-import { round } from "../utils/functions/Complex.mjs"
+import display from "../utils/shared/Display.mjs"
 import "./Calculator.css"
 
 export default function Calculator() {
+  const inputRef = useRef(null)
   const outputRef = useRef(null)
   const containerRef = useRef(null)
   const [userInput, setUserInput] = useState("")
+  const [displayInput, setDisplayInput] = useState("")
   const [output, setOutput] = useState("")
-  const [error, setError] = useState({ name: null, message: null })
+  const [inputError, setInputError] = useState(null)
+  const [outputError, setOutputError] = useState(null)
 
   const onClick = () => {
-    if (!error.name) {
+    if (!outputError && userInput.trim()) {
       const renderedOutput = outputRef.current.cloneNode(true)
       outputRef.current.style.transition = "none"
       renderedOutput.classList.remove("preview")
@@ -21,31 +24,38 @@ export default function Calculator() {
       renderedOutput.scrollIntoView()
       setUserInput("")
     } else {
-      setOutput(`${error.message}`)
+      if (!(inputError instanceof SyntaxError)) setOutput(`${outputError.message}`)
+      if (!userInput.trim()) {
+        setUserInput("")
+        inputRef.current.placeholder = "Enter something..."
+        setTimeout(() => (inputRef.current.placeholder = "Input"), 2000)
+      }
     }
   }
 
   useLayoutEffect(() => {
-    if (!userInput) {
+    outputRef.current.style.transition = "none"
+    if (!userInput.trim()) {
       outputRef.current.classList.add("hidden")
-      setOutput("")
+      setOutput(" ")
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
       try {
-        const result = createTree(parseInput(userInput)).evaluate()
-        console.log(result.toString())
-        if (Array.isArray(result)) {
-          setOutput(displayComplex(round(result, 10)))
-        } else {
-          setOutput(result.toString())
-        }
-        setError({ name: null, message: null })
-      } catch (err) {
-        if (err) {
-          setOutput("")
-          setError(err)
-        }
+        const tree = createTree(parseInput(userInput))
+        setDisplayInput(display(tree))
+        setInputError(null)
+      } catch (error) {
+        setDisplayInput(userInput)
+        setInputError(error)
+      }
+      try {
+        const tree = createTree(parseInput(userInput))
+        setOutput(display(tree.evaluate(), 15))
+        setOutputError(null)
+      } catch (error) {
+        setOutput("")
+        setOutputError(error)
       }
     }
   }, [userInput])
@@ -54,14 +64,16 @@ export default function Calculator() {
     <div className="calculator-container">
       <div className="input-box">
         <input
+          ref={inputRef}
           onChange={({ target }) => setUserInput(target.value)}
-          onKeyUp={({ keyCode }) => {
-            if (keyCode === 13) onClick()
+          onKeyUp={({ key }) => {
+            if (key === "Enter") onClick()
           }}
           type="text"
           id="user-input"
           name="user-input"
           placeholder="Input"
+          autoFocus
           spellCheck="false"
           autoComplete="off"
           autoCorrect="off"
@@ -73,9 +85,11 @@ export default function Calculator() {
         </div>
       </div>
       <div ref={outputRef} className="output preview">
-        <MathJax inline dynamic>{`$${userInput}$`}</MathJax>
         <MathJax inline dynamic>
-          {error.name ? `${output}` : `$${output}$`}
+          {inputError instanceof SyntaxError ? `${inputError.message}` : `$${displayInput}$`}
+        </MathJax>
+        <MathJax inline dynamic>
+          {outputError ? `${output}` : `$${output}$`}
         </MathJax>
       </div>
       <div ref={containerRef} className="output-container" />

@@ -4,6 +4,8 @@
 
 import createTree from "../tree/CreateTree.mjs"
 import { parseInput } from "../shared/Parsing.mjs"
+import display from "./Display.mjs"
+
 import Expression from "../tree/Expression.mjs"
 import { isInteger, sgn, abs, intPow, round } from "../functions/Real.mjs"
 import * as functions from "../functions/Complex.mjs"
@@ -15,52 +17,75 @@ const newExp = (op, args) => {
 
 const newC = (c) => newExp(null, [c])
 
-// compares two complex numbers or one user variable and one complex number
+/**
+ * Compares two complex numbers or one user variable and one complex number.
+ */
 const isSameConst = (c1, c2) => c1[0] === c2[0] && c1[1] === c2[1]
 
-// rounds a complex number unless precision can be maintained
+/**
+ * Rounds a complex number unless precision can be maintained.
+ */
 const roundComplex = (c, n) => {
   c[0] = abs(c[0]) < intPow(10, -n) ? c[0] : round(c[0], n)
   c[1] = abs(c[1]) < intPow(10, -n) ? c[1] : round(c[1], n)
   return [round(c[0], n), round(c[1], n)]
 }
 
-// checks if a complex number has integer real and imaginary parts
+/**
+ * Checks if a complex number has integer real and imaginary parts.
+ */
 const isGaussianInt = (c) => {
   c = roundComplex(c, 16)
   return isInteger(c[0]) && isInteger(c[1])
 }
 
-// function for filtering out a complex number
+/**
+ * Function for filtering out a given complex number.
+ */
 const isNot = (c) => {
   return ({ operation, args }) => !(operation.name === "identity" && isSameConst(args[0], c))
 }
 
-// basic constant without any operations
+/**
+ * Checks for a basic constant without any operations.
+ */
 const isBasicConst = ({ operation, args }) =>
   operation.name === "identity" && Array.isArray(args[0])
 
-// basic constants that are not math constants
+/**
+ * Checks for a basic constant that are not mathematical constants.
+ */
 const isRationalConst = ({ operation, args }) =>
   isBasicConst({ operation, args }) && !(typeof args[0][0] === "string")
 
-// checks for differentials. (dx, dy, etc.)
+/**
+ * Checks for differentials.
+ */
 const isDifferential = ({ operation, args }) =>
   operation.name === "identity" && /^d+[a-z]$/.test(args[0])
 
-// compares basic constant to a given complex number.
+/**
+ * Compares a basic constant to a given complex number.
+ */
 const isEquivalent = ({ operation, args }, c) =>
   isBasicConst({ operation, args }) && isSameConst(args[0], c)
 
-// sorts by: differentials > basic numbers > evaluable numbers > complexity > default sort
-const sortOrder = (argA, argB) =>
-  16 * (isDifferential(argA) - isDifferential(argB)) +
-  8 * (isBasicConst(argB) - isBasicConst(argA)) +
-  4 * (argB.isNumber() - argA.isNumber()) +
-  2 * sgn(argA.complexity - argB.complexity) +
-  1 * (argA > argB ? 1 : -1)
-
-// checks for a negative leading coefficient
+/**
+ * Sorts by: differentials > basic numbers > evaluable numbers > complexity > default sort
+ * Addition reverses basic numbers, evaluable numbers, complexity.
+ */
+const sortOrder = (op) => {
+  return (argA, argB) =>
+    16 * (isDifferential(argA) - isDifferential(argB)) +
+    (op === "add" ? -1 : 1) *
+      (8 * (isBasicConst(argB) - isBasicConst(argA)) +
+        4 * (argB.isNumber() - argA.isNumber()) +
+        2 * sgn(argA.complexity - argB.complexity)) +
+    (argA > argB ? 1 : -1)
+}
+/**
+ * Checks for a negative leading coefficient.
+ */
 const isNegativeLeading = ({ operation, args }) => {
   if (isBasicConst({ operation, args }) && args[0][0] < 0) return true
   if (operation.name === "multiply" && isBasicConst(args[0]) && args[0].args[0][0] < 0) return true
@@ -84,18 +109,20 @@ Array.prototype.remove = function (i, n = 1) {
  * @param {Expression} tree
  * @returns {Expression} simplified Expression
  */
-export default function simplify(tree, options) {
+export default function simplify(tree, options = { factor: true }) {
   const evaluation = tree.evaluate()
   if (Array.isArray(evaluation)) {
     if (isNaN(evaluation[0]) || isNaN(evaluation[1])) return newC([NaN, NaN])
     if (isGaussianInt(evaluation)) return newC(evaluation)
   }
-  const simplified = simplifyRules[tree.operation.name](tree, options)
+  if (!rules[tree.operation.name]) return rules.identity(tree, options) // TODO: remove this after rules are set
+  const simplified = rules[tree.operation.name](tree, options)
   if (tree.isIdenticalTo(simplified)) return simplified
+  //console.log(tree.toString(),display(tree),"\n")
   return simplify(simplified, options)
 }
 
-const simplifyRules = {
+const rules = {
   identity: (x) => x,
 
   add: ({ args }, options) => {
@@ -108,7 +135,7 @@ const simplifyRules = {
     if (rest.length === 0) return sum
     args = [sum, ...rest]
     args = args.filter(isNot([0, 0]))
-    args.sort(sortOrder)
+    args.sort(sortOrder("add"))
     // combines all arguments for addition operations
     for (let i = 0; i < args.length; i++) {
       if (args[i].operation.name === "add")
@@ -134,17 +161,24 @@ const simplifyRules = {
     // wraps each summand as a product, and then as an exponent if necessary
     for (let a = 0; a < args.length; a++) {
       let sumA = args[a]
-      if (sumA.operation.name !== "multiply") sumA = newExp("multiply", [newC([1, 0]), sumA])
+      if (sumA.operation.name !== "multiply") {
+        sumA = newExp("multiply", [newC([1, 0]), sumA])
+      }
       for (let b = a + 1; b < args.length; b++) {
         let sumB = args[b]
-        if (sumB.operation.name !== "multiply") sumB = newExp("multiply", [newC([1, 0]), sumB])
+        if (sumB.operation.name !== "multiply") {
+          sumB = newExp("multiply", [newC([1, 0]), sumB])
+        }
         for (let c = 0; c < sumA.args.length; c++) {
           let productC = sumA.args[c]
-          if (productC.operation.name !== "pow") productC = newExp("pow", [productC, newC([1, 0])])
+          if (productC.operation.name !== "pow") {
+            productC = newExp("pow", [productC, newC([1, 0])])
+          }
           for (let d = 0; d < sumB.args.length; d++) {
             let productD = sumB.args[d]
-            if (productD.operation.name !== "pow")
+            if (productD.operation.name !== "pow") {
               productD = newExp("pow", [productD, newC([1, 0])])
+            }
             // combines like terms
             if (
               productC.isIdenticalTo(productD) &&
@@ -174,10 +208,13 @@ const simplifyRules = {
               exponentB.evaluate()[0] >= 1 &&
               !isRationalConst(baseA)
             ) {
-              args[a].args[c] = newExp("pow", [baseA, newExp("add", [newC([-1, 0]), exponentA])])
-              args[b].args[d] = newExp("pow", [baseB, newExp("add", [newC([-1, 0]), exponentB])])
+              productC = newExp("pow", [baseA, newExp("add", [newC([-1, 0]), exponentA])])
+              productD = newExp("pow", [baseB, newExp("add", [newC([-1, 0]), exponentB])])
               args[a] = newExp("multiply", [
-                newExp("add", [newExp("multiply", args[a].args), newExp("multiply", args[b].args)]),
+                newExp("add", [
+                  newExp("multiply", [productC, ...sumA.args.remove(c)]),
+                  newExp("multiply", [productD, ...sumB.args.remove(d)]),
+                ]),
                 baseA,
               ])
               return simplify(newExp("add", args.remove(b)), options)
@@ -211,16 +248,16 @@ const simplifyRules = {
     const product = newC(newExp("multiply", numbers).evaluate())
     if (rest.length === 0) return product
     // distributes all rational constants
-    if (!isEquivalent(product, [1, 0]) && rest.length === 1 && rest[0].operation.name === "add") {
-      const sums = []
-      for (let i = 0; i < rest[0].args.length; i++) {
-        sums.push(newExp("multiply", [product, rest[0].args[i]]))
-      }
-      return simplify(newExp("add", sums), options)
-    }
+    // if (!isEquivalent(product, [1, 0]) && rest.length === 1 && rest[0].operation.name === "add") {
+    //   const sums = []
+    //   for (let i = 0; i < rest[0].args.length; i++) {
+    //     sums.push(newExp("multiply", [product, rest[0].args[i]]))
+    //   }
+    //   return simplify(newExp("add", sums), options)
+    // }
     args = [product, ...rest]
     args = args.filter(isNot([1, 0]))
-    args.sort(sortOrder)
+    args.sort(sortOrder("multiply"))
     // combines all arguments for multiplication operations
     for (let i = 0; i < args.length; i++) {
       if (args[i].operation.name === "multiply")
@@ -350,8 +387,7 @@ const simplifyRules = {
         }
       }
     }
-    const mappedArgs = args.map((arg) => simplify(arg, options))
-    return newExp("divide", mappedArgs)
+    return newExp("divide", [simplify(top, options), simplify(bot, options)])
   },
 
   pow: ({ args }, options) => {
@@ -367,6 +403,8 @@ const simplifyRules = {
   },
 }
 
-// const userInput = "x^0"
+// const factor = true
+// const userInput = "multiply(add(multiply(dx,ln(x)),multiply(x,divide(dx,x))))"
 // console.log(parseInput(userInput))
-// console.log(simplify(createTree(parseInput(userInput)), { factor: false }).toString())
+// console.log(simplify(createTree(parseInput(userInput)), { factor }).toString())
+// console.log(display(simplify(createTree(parseInput(userInput)), { factor })))

@@ -22,7 +22,7 @@ import {
   sin as sinR,
   cos as cosR,
   arctan as arctanR,
-  pi,
+  pi
 } from "./Real.mjs"
 
 const inf = Infinity
@@ -121,7 +121,7 @@ export function ceil(c) {
   return [ceilR(c[0]), ceilR(c[1])]
 }
 
-export function round(c, n) {
+const round = (c, n) => {
   return [roundR(c[0], n), roundR(c[1], n)]
 }
 
@@ -175,29 +175,29 @@ export function log(c) {
 
 export function pow(c1, c2) {
   const z = []
-  c1 = round(c1, 15)
-  c2 = round(c2, 15)
-  if (c1[1] === 0 && c2[1] === 0 && c1[0] > 0) {
-    return [powR(c1[0], c2[0]), 0]
+  const r1 = round(c1, 15)
+  const r2 = round(c2, 15)
+  if (r1[1] === 0 && r2[1] === 0 && r1[0] > 0) {
+    return [powR(r1[0], r2[0]), 0]
   }
-  if (isEqual(c1, [0, 0])) {
-    if (c2[0] > 0) return [0, 0]
-    if (c2[0] === 0) return [NaN, NaN]
-    if (c2[0] < 0) return [inf, 0]
+  if (isEqual(r1, [0, 0])) {
+    if (r2[0] > 0) return [0, 0]
+    if (r2[0] === 0) return [NaN, NaN]
+    if (r2[0] < 0) return [inf, 0]
     return [NaN, NaN]
   }
-  if (c2[0] > intPow(10, 15)) {
-    if (abs(c1)[0] > 1) return [inf, 0]
-    if (abs(c1)[0] >= 0 && abs(c1)[0] < 1) return [0, 0]
+  if (r2[0] > intPow(10, 15)) {
+    if (abs(r1)[0] > 1) return [inf, 0]
+    if (abs(r1)[0] >= 0 && abs(r1)[0] < 1) return [0, 0]
     return [NaN, NaN]
   }
-  if (c2[0] < -intPow(10, 15)) {
-    if (abs(c1)[0] > 1) return [0, 0]
-    if (abs(c1)[0] >= 0 && abs(c1)[0] < 1) return [inf, 0]
+  if (r2[0] < -intPow(10, 15)) {
+    if (abs(r1)[0] > 1) return [0, 0]
+    if (abs(r1)[0] >= 0 && abs(r1)[0] < 1) return [inf, 0]
     return [NaN, NaN]
   }
   z[0] = powR(abs(c1)[0], c2[0]) * expR(-c2[1] * arg(c1)[0])
-  if (c2[1] === 0) {
+  if (r2[1] === 0) {
     z[1] = c2[0] * arg(c1)[0]
   } else {
     z[1] = c2[0] * arg(c1)[0] + c2[1] * lnR(abs(c1)[0])

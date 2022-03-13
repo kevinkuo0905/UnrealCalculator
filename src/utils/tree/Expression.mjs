@@ -1,7 +1,9 @@
-import { NonrealError } from "../shared/Errors.mjs"
+import { NonrealError, DomainError } from "../shared/Errors.mjs"
 import { e, pi } from "../functions/Real.mjs"
+import * as functions from "../functions/Complex.mjs"
 import * as symbolics from "../functions/Symbolic.mjs"
 
+const functionsNameList = Object.keys({ ...functions, ...symbolics })
 const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
 
 /**
@@ -39,17 +41,14 @@ export default class Expression {
 
   get complexity() {
     const { operation, args } = this
-    if (operation !== identity) {
-      return args.reduce((acc, subtree) => acc + subtree.complexity, 1)
-    }
+    if (operation !== identity) return args.reduce((acc, subtree) => acc + subtree.complexity, 1)
     return 1
   }
 
-  evaluate({ degreeMode = false, complexMode = true } = {}, variable, c) {
+  evaluate(options = { degreeMode: false, complexMode: true }, variable, c) {
     const { operation, args } = this
-    if (symbolics[operation.name]) return operation(...args)
-    if (operation !== identity) {
-      const mappedArgs = args.map((arg) => arg.evaluate({ degreeMode, complexMode }, variable, c))
+    if (functions[operation.name]) {
+      const mappedArgs = args.map((arg) => arg.evaluate(options, variable, c))
       if (mappedArgs.some((arg) => arg instanceof Expression)) {
         const unMappedArgs = mappedArgs.map((arg) => {
           if (arg instanceof Expression) return arg
@@ -58,19 +57,27 @@ export default class Expression {
         return new Expression(operation, unMappedArgs)
       }
       const evaluation = trigFunctions.some((func) => operation.name.includes(func))
-        ? operation(...mappedArgs, degreeMode)
+        ? operation(...mappedArgs, options.degreeMode)
         : operation(...mappedArgs)
-      if (!complexMode && evaluation[1] !== 0) throw new NonrealError("Nonreal answer or argument.")
+      if (!options.complexMode && evaluation[1] !== 0)
+        throw new NonrealError("Nonreal answer or argument.")
       return evaluation
     }
-    const arg = args[0]
-    if (typeof arg === "string") {
-      if (arg.length === 0) throw new EvalError("Missing argument in function.")
-      if (!variable) return this
-      if (!c) throw new EvalError(`No value provided for ${arg}.`)
-      return operation(c)
+    if (operation === identity) {
+      const arg = args[0]
+      if (typeof arg === "string") {
+        const found = functionsNameList.find((func) => arg.includes(func))
+        if (found) throw new DomainError(`Use parenthesis around argument of ${found}.`)
+        if (arg.length === 0) throw new DomainError("Missing operand or argument.")
+        if (arg.length > 1 && !/d[a-z]/.test(arg))
+          throw new DomainError(`Variable: ${arg} must be a single character.`)
+        if (!variable || variable !== arg) return this
+        if (!c) throw new DomainError(`No value provided for ${arg}.`)
+        return operation(c)
+      }
+      return operation(arg)
     }
-    return operation(arg)
+    return operation(...args)
   }
 
   substitute(variable, { operation, args }) {
