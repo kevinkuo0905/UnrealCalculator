@@ -14,29 +14,55 @@ export default function Calculator() {
   const [output, setOutput] = useState("")
   const [inputError, setInputError] = useState(null)
   const [outputError, setOutputError] = useState(null)
+  const [inputHistory, setInputHistory] = useState([])
+  const [currentItem, setCurrentItem] = useState(-1)
 
-  const onClick = () => {
-    if (!outputError && userInput.trim()) {
-      const renderedOutput = outputRef.current.cloneNode(true)
-      outputRef.current.style.transition = "none"
-      renderedOutput.classList.remove("preview")
-      containerRef.current.appendChild(renderedOutput)
-      renderedOutput.scrollIntoView()
-      setUserInput("")
-    } else {
-      if (!userInput.trim()) {
+  const keyEvents = {
+    Enter: () => {
+      if (!outputError && userInput.trim()) {
+        const renderedOutput = outputRef.current.cloneNode(true)
+        outputRef.current.style.transition = "none"
+        renderedOutput.classList.remove("preview")
+        containerRef.current.appendChild(renderedOutput)
+        renderedOutput.scrollIntoView()
+        inputRef.current.focus()
+        setInputHistory([userInput, ...inputHistory])
         setUserInput("")
-        inputRef.current.placeholder = "Enter something..."
-        setTimeout(() => (inputRef.current.placeholder = "Input"), 2000)
+        setCurrentItem(-1)
+      } else {
+        if (!userInput.trim()) {
+          setUserInput("")
+          inputRef.current.placeholder = "Enter something..."
+          setTimeout(() => (inputRef.current.placeholder = "Input"), 2000)
+        }
+        if (!inputError && userInput.trim()) setOutput(`${outputError.message}`)
       }
-      if (!inputError && userInput.trim()) setOutput(`${outputError.message}`)
-    }
+    },
+
+    ArrowUp: () => {
+      if (inputHistory[currentItem + 1]) {
+        setUserInput(inputHistory[currentItem + 1])
+        setCurrentItem((current) => ++current)
+      }
+    },
+
+    ArrowDown: () => {
+      if (inputHistory[currentItem - 1]) {
+        setUserInput(inputHistory[currentItem - 1])
+        setCurrentItem((current) => --current)
+      }
+    },
+
+    Escape: () => {
+      setUserInput("")
+    },
   }
 
   useLayoutEffect(() => {
     outputRef.current.style.transition = "none"
     if (!userInput.trim()) {
       outputRef.current.classList.add("hidden")
+      setCurrentItem(-1)
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
@@ -70,9 +96,7 @@ export default function Calculator() {
         <input
           ref={inputRef}
           onChange={({ target }) => setUserInput(target.value)}
-          onKeyUp={({ key }) => {
-            if (key === "Enter") onClick()
-          }}
+          onKeyDown={({ key }) => keyEvents[key] && keyEvents[key]()}
           type="text"
           id="user-input"
           name="user-input"
@@ -84,7 +108,7 @@ export default function Calculator() {
           autoCapitalize="off"
           value={userInput}
         />
-        <div onClick={onClick} className="return">
+        <div onClick={keyEvents["Enter"]} className="return">
           <img src="/assets/icons/arrow-return-left.svg" alt="return" width="24" height="24" />
         </div>
       </div>
