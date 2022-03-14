@@ -22,7 +22,7 @@ import {
   sin as sinR,
   cos as cosR,
   arctan as arctanR,
-  pi
+  pi,e
 } from "./Real.mjs"
 
 const inf = Infinity

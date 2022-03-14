@@ -24,12 +24,12 @@ export default function Calculator() {
       renderedOutput.scrollIntoView()
       setUserInput("")
     } else {
-      if (!(inputError instanceof SyntaxError)) setOutput(`${outputError.message}`)
       if (!userInput.trim()) {
         setUserInput("")
         inputRef.current.placeholder = "Enter something..."
         setTimeout(() => (inputRef.current.placeholder = "Input"), 2000)
       }
+      if (!inputError && userInput.trim()) setOutput(`${outputError.message}`)
     }
   }
 
@@ -37,13 +37,17 @@ export default function Calculator() {
     outputRef.current.style.transition = "none"
     if (!userInput.trim()) {
       outputRef.current.classList.add("hidden")
-      setOutput("")
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
+      containerRef.current.scrollTo(0, 500)
       try {
         const tree = createTree(parseInput(userInput))
-        setDisplayInput(display(tree))
+        if (display(tree) === "") {
+          setDisplayInput(" ")
+        } else {
+          setDisplayInput(display(tree))
+        }
         setInputError(null)
       } catch (error) {
         setDisplayInput(userInput)
@@ -86,10 +90,10 @@ export default function Calculator() {
       </div>
       <div ref={outputRef} className="output preview">
         <MathJax inline dynamic>
-          {inputError ? `${inputError.message}` : `$${displayInput}$`}
+          {inputError ? `$\\small{\\textrm{${inputError.message}}}$` : `$${displayInput}$`}
         </MathJax>
         <MathJax inline dynamic>
-          {outputError ? `${output}` : `$${output}$`}
+          {outputError ? `$\\small{\\textrm{${output}}}$` : `$${output}$`}
         </MathJax>
       </div>
       <div ref={containerRef} className="output-container" />

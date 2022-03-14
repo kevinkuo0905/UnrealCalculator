@@ -4,10 +4,10 @@ import "./Grapher.css"
 
 export default function Grapher() {
   const panelsConfig = {
-    percentage: 25,
-    minRatio: 20,
-    maxRatio: 50,
-    alwaysShowSecond: true,
+    percentage: 75,
+    minRatio: 50,
+    maxRatio: 80,
+    alwaysShowFirst: true,
     autoRotate: true,
   }
 

@@ -9,16 +9,16 @@ export default function Main() {
     ids: ["grapher", "calculator"],
     onePanelOnlyMaxDimens: 720,
     onePanelDefault: 2,
-    percentage: 70,
-    minRatio: 50,
-    maxRatio: 80,
+    percentage: 30,
+    minRatio: 20,
+    maxRatio: 50,
   }
 
   return (
     <main>
       <Panels config={panelsConfig}>
-        <Grapher />
         <Calculator />
+        <Grapher />
       </Panels>
     </main>
   )

@@ -30,6 +30,7 @@
   width: 32px;
   height: 32px;
   border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -41,13 +42,13 @@
 }
 
 .first.horizontal {
-  bottom: 10px;
+  top: 10px;
   right: 10px;
   transform: rotate(180deg);
 }
 
 .second.horizontal {
-  bottom: 10px;
+  top: 10px;
   left: 10px;
 }
 

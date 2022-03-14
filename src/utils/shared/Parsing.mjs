@@ -101,18 +101,20 @@ const verifyInput = (userInput) => {
   if (userInput[0] === "(" && matchParen(userInput, 0) === userInput.length - 1) {
     userInput = userInput.slice(1, -1)
   }
+  let offset = 0
   const matches = userInput.matchAll(/[a-zI]{2,}/g)
   for (const match of matches) {
     if (
-      (userInput[match.index + match[0].length] !== "(" &&
+      (userInput[match.index + match[0].length + offset] !== "(" &&
         match[0] !== "Infinity" &&
         match[0] !== "pi") ||
       /d[a-z]/.test(match[0])
     ) {
       userInput =
-        userInput.slice(0, match.index) +
+        userInput.slice(0, match.index + offset) +
         `(${match[0]})` +
-        userInput.slice(match.index + match[0].length)
+        userInput.slice(match.index + match[0].length + offset)
+      offset += 2
     }
   }
   return userInput
@@ -159,7 +161,7 @@ const parseUnaryOp = (userInput, opName, opIndex) => {
   // checks for negation
   if ((!userInput[opIndex - 1] || userInput[opIndex - 1] !== ")") && opName === "subtract") {
     const zero = "([0,0])"
-    param += zero
+    param = userInput.slice(0, opIndex) + zero
     opIndex += zero.length
     userInput = param + userInput.slice(opIndex)
   }
@@ -236,7 +238,7 @@ const parseCaret = (userInput) => {
   while (opIndex !== -1) {
     userInput = parseBinaryOp(userInput, "pow", opIndex)
     // replaces e^(x) with exp(x)
-    userInput = userInput.replace("pow(([e,0]),", "exp(")
+    userInput = userInput.replace("pow([e,0],", "exp(")
     opIndex = userInput.lastIndexOf("^")
   }
   return userInput
