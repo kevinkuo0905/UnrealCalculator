@@ -90,10 +90,10 @@ export default function Calculator() {
       </div>
       <div ref={outputRef} className="output preview">
         <MathJax inline dynamic>
-          {inputError ? `$\\small{\\textrm{${inputError.message}}}$` : `$${displayInput}$`}
+          {inputError ? `$\\small{\\textrm{${inputError.message} }}$` : `$${displayInput}$`}
         </MathJax>
         <MathJax inline dynamic>
-          {outputError ? `$\\small{\\textrm{${output}}}$` : `$${output}$`}
+          {outputError ? `$\\small{\\textrm{${output} }}$` : `$${output}$`}
         </MathJax>
       </div>
       <div ref={containerRef} className="output-container" />

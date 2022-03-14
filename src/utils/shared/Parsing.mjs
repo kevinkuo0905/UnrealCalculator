@@ -9,8 +9,9 @@
  * and variables are enclosed in parentheses, and adding a negative is replaced with subtract.
  */
 const parseConst = (userInput) => {
-  const found = userInput.search(/[~`@#$&_[\]{};:'"<>?]/)
-  if (found !== -1) throw new SyntaxError(`Forbidden character: ${userInput[found]}`)
+  const found = userInput.search(/[~`@#$&_[\]{}\\;:'"<>?]/)
+  const escapeDelimiter = userInput[found] === "$" ? "\\$" : userInput[found]
+  if (found !== -1) throw new SyntaxError(`Forbidden character: ${escapeDelimiter}`)
   return userInput
     .replace(/ /g, "")
     .replace(/(?<!\.)([1-9]+\.?\d*e[+-]\d{1,3}|\d+\.?\d*|\.\d+)(?!\d|\.)/g, "([$1,0])")
@@ -108,7 +109,7 @@ const verifyInput = (userInput) => {
       (userInput[match.index + match[0].length + offset] !== "(" &&
         match[0] !== "Infinity" &&
         match[0] !== "pi") ||
-      /d[a-z]/.test(match[0])
+      /d[a-z]$/.test(match[0])
     ) {
       userInput =
         userInput.slice(0, match.index + offset) +

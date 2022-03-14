@@ -10,6 +10,7 @@ function App() {
     loader: { load: ["[tex]/html"] },
     tex: {
       inlineMath: [["$", "$"]],
+      processEscapes: true,
     },
     options: { enableMenu: false },
   }

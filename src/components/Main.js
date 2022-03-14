@@ -6,7 +6,7 @@ import "./Main.css"
 
 export default function Main() {
   const panelsConfig = {
-    ids: ["grapher", "calculator"],
+    ids: ["calculator", "grapher"],
     onePanelOnlyMaxDimens: 720,
     onePanelDefault: 2,
     percentage: 30,
