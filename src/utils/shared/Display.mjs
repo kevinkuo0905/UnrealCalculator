@@ -159,9 +159,10 @@ const rules = {
 
   diff: ({ args }) => {
     const mappedArgs = args.map((arg) => toTeX(arg))
-    if (mappedArgs.length === 1) return `d(${mappedArgs[0]})`
-    if (mappedArgs[1].length === 1) return `\\frac{d}{d${mappedArgs[1]}}(${mappedArgs[0]})`
-    return `\\frac{d}{d(${mappedArgs[1]})}(${mappedArgs[0]})`
+    if (mappedArgs.length === 1) return `\\textrm{d}(${mappedArgs[0]})`
+    if (mappedArgs[1].length === 1)
+      return `\\frac{\\textrm{d}}{\\textrm{d}${mappedArgs[1]}}(${mappedArgs[0]})`
+    return `\\frac{\\textrm{d}}{\\textrm{d}(${mappedArgs[1]})}(${mappedArgs[0]})`
   },
 
   badFunction: ({ operation, args }) => {

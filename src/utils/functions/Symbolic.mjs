@@ -15,6 +15,9 @@ export function diff(treeA, treeB, partial = false) {
   if (!treeB) return simplify(differentiate(treeA))
   if (treeB.isNumber()) throw new DomainError("Cannot differentiate with respect to a constant.")
   return simplify(
-    newExp("divide", [simplify(differentiate(treeA)), simplify(differentiate(treeB))])
+    newExp("divide", [
+      simplify(differentiate(treeA)),
+      simplify(differentiate(treeB)),
+    ])
   )
 }

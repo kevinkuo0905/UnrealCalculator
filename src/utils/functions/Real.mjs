@@ -1,6 +1,7 @@
 /**
  * Real valued functions constructed from Taylor series and domain extension.
  * Argument reduction methods are used to evaluate Taylor series near their centers.
+ * Ranges may seem arbitrary, but they are optimized for speed and accuracy.
  */
 
 import { DomainError } from "../shared/Errors.mjs"

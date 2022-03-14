@@ -4,11 +4,6 @@
  * TODO: parse absolute value
  */
 
-import * as functions from "../functions/Complex.mjs"
-import * as symbolics from "../functions/Symbolic.mjs"
-
-const functionList = Object.keys({ ...functions, ...symbolics })
-
 /**
  * Formats all numbers and constants as complex numbers. Spaces are removed, numbers
  * and variables are enclosed in parentheses, and adding a negative is replaced with subtract.
@@ -23,7 +18,7 @@ const parseConst = (userInput) => {
     .replace(/(?<![a-df-hj-z])i(?![a-df-hj-oq-z])/g, "([0,1])")
     .replace(/(?<![a-df-hj-z])e(?!(?<=\de)[+-]\d{1,3}|[a-df-oq-z])/g, "([e,0])")
     .replace(/(?<![a-hj-z])pi(?![a-oq-z])/g, "([pi,0])")
-    .replace(/(?<!\w)([a-df-hj-z]|d[a-z])(?!\w)/g, "($1)")
+    .replace(/(?<!\w)([a-df-hj-z])(?!\w)/g, "($1)")
     .replace(/(?<![-+*/])\+-/g, "-")
 }
 
@@ -72,22 +67,25 @@ const matchParen = (userInput, index, leftToRight = true) => {
 const verifyInput = (userInput) => {
   const validNumbersRemoved = userInput.replace(/\[[^,]+,[^,]+\]/g, "")
   if (/\d|\./.test(validNumbersRemoved)) throw new SyntaxError("Invalid number or decimal.")
-  let j = 0
-  for (let i = 0; i < userInput.length; i++) {
-    if (userInput[i] === "(") j++
-    if (userInput[i] === ")") j--
-  }
-  if (j > 0) {
-    for (let i = 0; i < j; i++) {
+  let index = userInput.indexOf("(")
+  while (index !== -1) {
+    try {
+      index = userInput.indexOf("(", matchParen(userInput, index))
+    } catch {
       userInput = userInput + ")"
+      index = userInput.indexOf("(")
     }
   }
-  if (j < 0) {
-    for (let i = 0; i > j; i--) {
+  index = userInput.lastIndexOf(")")
+  while (index !== -1) {
+    try {
+      index = userInput.lastIndexOf(")", matchParen(userInput, index, false))
+    } catch {
       userInput = "(" + userInput
+      index = userInput.lastIndexOf(")")
     }
   }
-  let index = userInput.indexOf("((")
+  index = userInput.indexOf("((")
   while (index !== -1) {
     const parenIndex = matchParen(userInput, index)
     if (parenIndex === matchParen(userInput, index + 1) + 1) {
@@ -106,12 +104,15 @@ const verifyInput = (userInput) => {
   const matches = userInput.matchAll(/[a-zI]{2,}/g)
   for (const match of matches) {
     if (
-      userInput[match.index + match[0].length] !== "(" &&
-      !/d[a-z]/.test(match[0]) &&
-      match[0] !== "Infinity" &&
-      match[0] !== "pi"
+      (userInput[match.index + match[0].length] !== "(" &&
+        match[0] !== "Infinity" &&
+        match[0] !== "pi") ||
+      /d[a-z]/.test(match[0])
     ) {
-      userInput = userInput.replace(match[0], `(${match[0]})`)
+      userInput =
+        userInput.slice(0, match.index) +
+        `(${match[0]})` +
+        userInput.slice(match.index + match[0].length)
     }
   }
   return userInput
@@ -134,14 +135,14 @@ const parseDifferential = (userInput) => {
  * Parses implied multiplication by adding "*" after ")" unless an operation follows.
  */
 const parseImplied = (userInput) => {
-  let parenIndex = userInput.indexOf(")")
+  let index = userInput.indexOf(")")
   let op = ["+", "-", "*", "/", ")", "^", ",", "!"]
-  while (parenIndex !== -1) {
-    const nextIndex = parenIndex + 1
-    if (!op.includes(userInput[nextIndex]) && parenIndex !== userInput.length - 1) {
+  while (index !== -1) {
+    const nextIndex = index + 1
+    if (!op.includes(userInput[nextIndex]) && index !== userInput.length - 1) {
       userInput = userInput.slice(0, nextIndex) + "*" + userInput.slice(nextIndex)
     }
-    parenIndex = userInput.indexOf(")", nextIndex)
+    index = userInput.indexOf(")", nextIndex)
   }
   return userInput
 }
@@ -154,8 +155,7 @@ const parseImplied = (userInput) => {
  * @returns {String} parsed userInput
  */
 const parseUnaryOp = (userInput, opName, opIndex) => {
-  let param = userInput.slice(0, opIndex)
-  let paramStart = 0
+  let param, paramStart
   // checks for negation
   if ((!userInput[opIndex - 1] || userInput[opIndex - 1] !== ")") && opName === "subtract") {
     const zero = "([0,0])"
@@ -166,13 +166,13 @@ const parseUnaryOp = (userInput, opName, opIndex) => {
   // checks format (x)#
   if (userInput[opIndex - 1] === ")") {
     const parenIndex = matchParen(userInput, opIndex - 1, false)
-    param = userInput.slice(userInput.lastIndexOf("(", parenIndex) + 1, opIndex - 1)
     paramStart = userInput.lastIndexOf("(", parenIndex)
+    param = userInput.slice(paramStart + 1, opIndex - 1)
     // checks format func(x)#
     while (userInput[paramStart - 1] && /[a-z]/.test(userInput[paramStart - 1])) {
       paramStart--
+      param = userInput.slice(paramStart, opIndex)
     }
-    param = userInput.slice(paramStart, opIndex)
   } else {
     param = ""
     paramStart = opIndex
@@ -188,14 +188,13 @@ const parseUnaryOp = (userInput, opName, opIndex) => {
  * @returns {String} parsed userInput
  */
 const parseBinaryOp = (userInput, opName, opIndex) => {
-  let secondParam = userInput.slice(opIndex + 1)
-  let secondParamEnd = userInput.length - 1
+  let secondParam, secondParamEnd
   if (userInput[opIndex + 1] === "(") {
     // checks format x#(y)
     const parenIndex = matchParen(userInput, opIndex + 1)
     secondParamEnd = userInput.indexOf(")", parenIndex)
     secondParam = userInput.slice(opIndex + 2, secondParamEnd)
-  } else if (!userInput[opIndex + 1] || /[-+*/^,\)]/.test(userInput[opIndex + 1])) {
+  } else if (!userInput[opIndex + 1] || /[+*/^,\)]/.test(userInput[opIndex + 1])) {
     secondParamEnd = opIndex
     secondParam = ""
   } else {
@@ -204,9 +203,14 @@ const parseBinaryOp = (userInput, opName, opIndex) => {
     while (userInput[opIndex + i] && userInput[opIndex + i] !== "(") {
       i++
     }
-    const parenIndex = matchParen(userInput, opIndex + i)
-    secondParamEnd = userInput.indexOf(")", parenIndex)
-    secondParam = userInput.slice(opIndex + 1, secondParamEnd + 1)
+    if (!userInput[opIndex + i]) {
+      secondParamEnd = opIndex
+      secondParam = ""
+    } else {
+      const parenIndex = matchParen(userInput, opIndex + i)
+      secondParamEnd = userInput.indexOf(")", parenIndex)
+      secondParam = userInput.slice(opIndex + 1, secondParamEnd + 1)
+    }
   }
   const firstHalf = parseUnaryOp(userInput, opName, opIndex).slice(0, -1)
   return `${firstHalf},${secondParam})${userInput.slice(secondParamEnd + 1)}`
@@ -240,6 +244,10 @@ const parseCaret = (userInput) => {
 
 /**
  * Formats one complex operation, starting from the left.
+ * @param {String} userInput
+ * @param {String} opSymbol the symbol to parse
+ * @param {String} opName operation function name
+ * @returns {String} parsed user input
  */
 const parseComplexOp = (userInput, opSymbol, opName) => {
   // avoids parsing + or - in 1.2e+10 format
@@ -277,7 +285,7 @@ export const parseExp = (expression) => {
   }
   let index = expression.indexOf("(")
   const name = expression.slice(0, index)
-  if (index === -1) return { args: [expression], name: "none" }
+  if (index === -1) return { args: [expression], name: "identity" }
   const args = []
   let j = 0
   let k = 1

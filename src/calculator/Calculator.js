@@ -37,7 +37,7 @@ export default function Calculator() {
     outputRef.current.style.transition = "none"
     if (!userInput.trim()) {
       outputRef.current.classList.add("hidden")
-      setOutput(" ")
+      setOutput("")
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
@@ -51,7 +51,7 @@ export default function Calculator() {
       }
       try {
         const tree = createTree(parseInput(userInput))
-        setOutput(display(tree.evaluate(), 15))
+        setOutput(display(tree.evaluate()))
         setOutputError(null)
       } catch (error) {
         setOutput("")
@@ -86,7 +86,7 @@ export default function Calculator() {
       </div>
       <div ref={outputRef} className="output preview">
         <MathJax inline dynamic>
-          {inputError instanceof SyntaxError ? `${inputError.message}` : `$${displayInput}$`}
+          {inputError ? `${inputError.message}` : `$${displayInput}$`}
         </MathJax>
         <MathJax inline dynamic>
           {outputError ? `${output}` : `$${output}$`}

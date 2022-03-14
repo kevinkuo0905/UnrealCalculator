@@ -3,8 +3,22 @@ import { e, pi } from "../functions/Real.mjs"
 import * as functions from "../functions/Complex.mjs"
 import * as symbolics from "../functions/Symbolic.mjs"
 
-const functionsNameList = Object.keys({ ...functions, ...symbolics })
 const trigFunctions = ["sin", "cos", "tan", "csc", "sec", "cot"]
+const argumentsNum = {
+  many: ["add", "multiply", "min", "max", "gcd"],
+  four: ["int"],
+  three: ["diff"],
+  two: ["subtract", "divide", "npr", "ncr", "pow"],
+}
+const functionNamesList = Object.keys({ ...functions, ...symbolics })
+const functionArgsLengths = functionNamesList.reduce((acc, func) => {
+  acc[func] = 1
+  if (argumentsNum.many.includes(func)) acc[func] = 0
+  if (argumentsNum.four.includes(func)) acc[func] = 4
+  if (argumentsNum.three.includes(func)) acc[func] = 3
+  if (argumentsNum.two.includes(func)) acc[func] = 2
+  return acc
+}, {})
 
 /**
  * The identity function converts a mathematical constant stored as a string into a number when an
@@ -21,10 +35,10 @@ const identity = (x) => {
 }
 
 /**
- * A class with operations and arguments: each argument may be complex numbers, strings, or other
+ * A class with operations and argumentsNum: each argument may be complex numbers, strings, or other
  * Expression objects, creating an abstract syntax tree.
  * An expression object containing strings are function expressions of that string variable.
- * An expression object containing only complex numbers as arguments for the leaves of the tree is
+ * An expression object containing only complex numbers as argumentsNum for the leaves of the tree is
  * evaluable and are considered constants.
  */
 export default class Expression {
@@ -47,6 +61,9 @@ export default class Expression {
 
   evaluate(options = { degreeMode: false, complexMode: true }, variable, c) {
     const { operation, args } = this
+    const length = functionArgsLengths[operation.name]
+    if (length && args.length > length)
+      throw new DomainError(`Max number of arguments expected for ${operation.name}: ${length}.`)
     if (functions[operation.name]) {
       const mappedArgs = args.map((arg) => arg.evaluate(options, variable, c))
       if (mappedArgs.some((arg) => arg instanceof Expression)) {
@@ -66,7 +83,7 @@ export default class Expression {
     if (operation === identity) {
       const arg = args[0]
       if (typeof arg === "string") {
-        const found = functionsNameList.find((func) => arg.includes(func))
+        const found = functionNamesList.find((func) => arg.includes(func))
         if (found) throw new DomainError(`Use parenthesis around argument of ${found}.`)
         if (arg.length === 0) throw new DomainError("Missing operand or argument.")
         if (arg.length > 1 && !/d[a-z]/.test(arg))

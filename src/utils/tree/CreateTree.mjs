@@ -12,8 +12,8 @@ import * as symbolics from "../functions/Symbolic.mjs"
  */
 export default function createTree(expression) {
   const { args, name } = parseExp(expression)
-  if (name === "none") {
-    if (/^\[[^,]+,[^,]+\]$/.test(args)) {
+  if (name === "identity") {
+    if (/^\[[^,]+,[^,]+\]$/.test(args)) { // RegExp.test works on arrays?
       const complexNum = args[0]
         .slice(1, -1)
         .split(",")
@@ -22,8 +22,6 @@ export default function createTree(expression) {
     }
     return new Expression(null, args)
   }
-  //if (!functions[name] && !symbolics[name])
-  //throw new FunctionError(`Function: ${name} is not supported.`)
   return new Expression(
     functions[name] ||
       symbolics[name] ||
