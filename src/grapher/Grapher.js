@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useRef, useState, useEffect } from "react"
 import Panels from "../components/Panels"
 import "./Grapher.css"
 
@@ -10,17 +10,22 @@ export default function Grapher() {
     alwaysShowFirst: true,
     autoRotate: true,
   }
+  const canvasRef = useRef(null)
+  const [userFunctions, setUserFunctions] = useState([])
+  const [displayFunctions, setDisplayFunctions] = useState([])
 
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d")
+  }, [])
 
   return (
     <div className="flex-fill-container">
       <Panels config={panelsConfig}>
-        <div style={{ backgroundColor: "orange" }} className="flex-fill-container">
-
+        <div className="flex-fill-container">
+          <canvas ref={canvasRef} />
         </div>
-        <div style={{ backgroundColor: "lightgrey" }} className="flex-fill-container">
-
-        </div>
+        <div className="flex-fill-container">
+          </div>
       </Panels>
     </div>
   )

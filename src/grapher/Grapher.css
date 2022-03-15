@@ -3,3 +3,8 @@
   width: 100%;
   height: 100%;
 }
+
+canvas{
+  border-right: 1px solid grey;
+  border-left: 1px solid grey;
+}

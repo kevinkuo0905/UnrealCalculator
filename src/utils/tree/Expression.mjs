@@ -35,10 +35,10 @@ const identity = (x) => {
 }
 
 /**
- * A class with operations and argumentsNum: each argument may be complex numbers, strings, or other
- * Expression objects, creating an abstract syntax tree.
+ * A mathematical expression with operations and arguments: each argument may be complex numbers,
+ * strings, or other Expression objects, creating an abstract syntax tree.
  * An expression object containing strings are function expressions of that string variable.
- * An expression object containing only complex numbers as argumentsNum for the leaves of the tree is
+ * An expression object containing only complex numbers as arguments for the leaves of the tree is
  * evaluable and are considered constants.
  */
 export default class Expression {

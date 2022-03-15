@@ -71,6 +71,3 @@ div.output > span:last-child {
   overflow: auto;
 }
 
-.output-container::-webkit-scrollbar {
-  display: none;
-}

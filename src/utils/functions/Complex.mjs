@@ -22,7 +22,7 @@ import {
   sin as sinR,
   cos as cosR,
   arctan as arctanR,
-  pi
+  pi,
 } from "./Real.mjs"
 
 const inf = Infinity
@@ -214,6 +214,7 @@ export function arctan(c, degreeMode = false) {
   if (c[0] > intPow(10, 12)) return degreeMode ? [90, 0] : [pi / 2, 0]
   if (c[0] < -intPow(10, 12)) return degreeMode ? [-90, 0] : [-pi / 2, 0]
   if (c[1] === 0) return [arctanR(c[0], degreeMode), 0]
+  if (isEqual(c, [0, 1])) return [0, inf]
   return multiply(
     degreeMode ? [180 / pi, 0] : [1, 0],
     [0, -0.5],

@@ -7,11 +7,11 @@ import "./Main.css"
 export default function Main() {
   const panelsConfig = {
     ids: ["calculator", "grapher"],
-    onePanelOnlyMaxDimens: 720,
-    onePanelDefault: 2,
-    percentage: 30,
-    minRatio: 20,
-    maxRatio: 50,
+    onePanelOnlyMaxDimens: 960,
+    onePanelDefault: 1,
+    percentage: 35,
+    minRatio: 25,
+    maxRatio: 45,
   }
 
   return (

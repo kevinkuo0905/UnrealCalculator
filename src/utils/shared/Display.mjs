@@ -8,12 +8,11 @@
  * @param {Number} n number of digits to round to
  * @returns {String} cleaned up result in TeX format
  */
-export default function display(result, n) {
+export default function display(result, n=16) {
   if (Array.isArray(result)) return displayComplex(result, n)
   return toTeX(result, n)
     .replace(/\+-/g, "-")
-    .replace(/(?<![\d.])1([a-z\\](?!cdot))/g, "$1")
-    .replace(/(?<![\d.])1\(/g, "(")
+    .replace(/(?<![\d.])1([a-z\\](?!cdot|right))/g, "$1")
 }
 
 const trigInverse = ["arcsin", "arccos", "arctan", "arccsc", "arcsec", "arccot"]
@@ -58,9 +57,10 @@ const displayComplex = (c, n = 12) => {
 }
 
 /**
- * Checks for whether the ith arg is a sum or difference to be wrapped in parentheses.
+ * Checks for whether the ith arg is to be wrapped in parentheses.
  */
-const needsParen = ({ args }, i) =>
+const needsParen = ({ args }, i, pow = false) =>
+  (pow && args[i].operation.name === "divide") ||
   args[i].operation.name === "add" ||
   args[i].operation.name === "subtract" ||
   (Array.isArray(args[i].args[0]) && args[i].args[0][0] !== 0 && args[i].args[0][1] !== 0)
@@ -70,8 +70,8 @@ const needsParen = ({ args }, i) =>
  */
 const toTeX = ({ operation, args }, n) => {
   if (rules[operation.name]) return rules[operation.name]({ operation, args }, n)
-  if (trigInverse.includes(operation.name)) return rules.trigInverse({ operation, args })
-  return rules.etc({ operation, args })
+  if (trigInverse.includes(operation.name)) return rules.trigInverse({ operation, args }, n)
+  return rules.etc({ operation, args }, n)
 }
 
 const rules = {
@@ -80,99 +80,102 @@ const rules = {
     return displayComplex(arg, n)
   },
 
-  abs: ({ args: [arg] }) => {
-    return `|${toTeX(arg)}|`
+  abs: ({ args: [arg] }, n) => {
+    return `|${toTeX(arg, n)}|`
   },
 
-  add: ({ args }) => {
-    return args.map((arg) => toTeX(arg)).join("+")
+  add: ({ args }, n) => {
+    return args.map((arg) => toTeX(arg, n)).join("+")
   },
 
-  subtract: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
+  subtract: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
     if (mappedArgs[0] === "0") mappedArgs[0] = ""
-    if (needsParen({ args }, 1)) return `${mappedArgs[0]}-(${mappedArgs[1]})`
+    if (needsParen({ args }, 1)) return `${mappedArgs[0]}-\\left(${mappedArgs[1]}\\right)`
     return mappedArgs.join("-")
   },
 
-  multiply: ({ args }) => {
+  multiply: ({ args }, n) => {
     const mappedArgs = args.map((arg, i) => {
-      if (needsParen({ args }, i)) return `(${toTeX(arg)})`
+      if (needsParen({ args }, i)) return `\\left(${toTeX(arg, n)}\\right)`
       const mathConsts = ["e", "\\pi ", "i", "\\infty "]
-      if (i !== 0 && (/\d|-/.test(toTeX(arg)[0]) || mathConsts.includes(toTeX(arg))))
-        return `\\cdot ${toTeX(arg)}`
-      return toTeX(arg)
+      if (i !== 0 && (/\d|-/.test(toTeX(arg, n)[0]) || mathConsts.includes(toTeX(arg, n))))
+        return `\\cdot ${toTeX(arg, n)}`
+      return toTeX(arg, n)
     })
     return mappedArgs.join("")
   },
 
-  divide: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
+  divide: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
     return `\\frac{${mappedArgs[0]}}{${mappedArgs[1]}}`
   },
 
-  floor: ({ args: [arg] }) => {
-    return `\\lfloor{${toTeX(arg)}}\\rfloor `
+  floor: ({ args: [arg] }, n) => {
+    return `\\lfloor{${toTeX(arg, n)}}\\rfloor `
   },
 
-  ceil: ({ args: [arg] }) => {
-    return `\\lceil{${toTeX(arg)}}\\rceil `
+  ceil: ({ args: [arg] }, n) => {
+    return `\\lceil{${toTeX(arg, n)}}\\rceil `
   },
 
-  exp: ({ args: [arg] }) => {
-    return `e^{${toTeX(arg)}}`
+  exp: ({ args: [arg] }, n) => {
+    return `e^{${toTeX(arg, n)}}`
   },
 
-  fac: ({ args: [arg] }) => {
-    if (needsParen({ args: [arg] }, 0)) return `(${toTeX(arg)})!`
-    return `${toTeX(arg)}!`
+  fac: ({ args: [arg] }, n) => {
+    if (needsParen({ args: [arg] }, 0)) return `\\left(${toTeX(arg, n)}\\right)!`
+    return `${toTeX(arg, n)}!`
   },
 
-  npr: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
+  npr: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
     return `_{${mappedArgs[0]}}P_{${mappedArgs[1]}}`
   },
 
-  ncr: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
+  ncr: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
     return `_{${mappedArgs[0]}}C_{${mappedArgs[1]}}`
   },
 
-  pow: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
-    if (needsParen({ args }, 0)) return `(${mappedArgs[0]})^{${mappedArgs[1]}}`
+  pow: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
+    if (needsParen({ args }, 0, true)) return `\\left(${mappedArgs[0]}\\right)^{${mappedArgs[1]}}`
     return `{${mappedArgs[0]}}^{${mappedArgs[1]}}`
   },
 
-  sqrt: ({ args: [arg] }) => {
-    return `\\sqrt{${toTeX(arg)}}`
+  sqrt: ({ args: [arg] }, n) => {
+    return `\\sqrt{${toTeX(arg, n)}}`
   },
 
-  trigInverse: ({ operation, args: [arg] }) => {
-    return `\\${operation.name.slice(3)}^{-1}(${toTeX(arg)})`
+  trigInverse: ({ operation, args: [arg] }, n) => {
+    return `\\${operation.name.slice(3)}^{-1}\\left(${toTeX(arg, n)}\\right)`
   },
 
-  etc: ({ operation, args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
-    return `\\${operation.name}(${mappedArgs.join(",")})`
+  etc: ({ operation, args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
+    return `\\${operation.name}\\left(${mappedArgs.join(",")}\\right)`
   },
 
-  diff: ({ args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
-    if (mappedArgs.length === 1) return `\\textrm{d}(${mappedArgs[0]})`
+  diff: ({ args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
+    if (mappedArgs.length === 1) return `\\textrm{d}\\left(${mappedArgs[0]}\\right)`
     if (mappedArgs[1].length === 1)
-      return `\\frac{\\textrm{d}}{\\textrm{d}${mappedArgs[1]}}(${mappedArgs[0]})`
-    return `\\frac{\\textrm{d}}{\\textrm{d}(${mappedArgs[1]})}(${mappedArgs[0]})`
+      return `\\frac{\\textrm{d}}{\\textrm{d}${mappedArgs[1]}}\\left(${mappedArgs[0]}\\right)`
+    return (
+      `\\frac{\\textrm{d}}{\\textrm{d}\\left(${mappedArgs[1]}\\right)}` +
+      `\\left(${mappedArgs[0]}\\right)`
+    )
   },
 
-  badFunction: ({ operation, args }) => {
-    const mappedArgs = args.map((arg) => toTeX(arg))
+  badFunction: ({ operation, args }, n) => {
+    const mappedArgs = args.map((arg) => toTeX(arg, n))
     let name
     try {
       operation()
     } catch (error) {
       name = error.message.replace(/Function: ([^ ]+) .+/, "$1")
     }
-    return `${name}(${mappedArgs.join(",")})`
+    return `${name}\\left(${mappedArgs.join(",")}\\right)`
   },
 }
