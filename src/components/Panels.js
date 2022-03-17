@@ -34,11 +34,11 @@ export default function Panels({ children, config }) {
     const secondButton = secondButtonRef.current
     let containerDimens, firstDimens, secondDimens, point
 
-    if (autoRotate) {
-      setVertical(container.clientHeight / container.clientWidth > 1)
-      first.style[vertical ? "width" : "height"] = "100%"
-      second.style[vertical ? "width" : "height"] = "100%"
-    }
+    // if (autoRotate) {
+    //   setVertical(container.clientHeight / container.clientWidth > 1)
+    //   first.style[vertical ? "width" : "height"] = "100%"
+    //   second.style[vertical ? "width" : "height"] = "100%"
+    // }
 
     const onMouseDownResize = (event) => {
       if (event.button === 0) {
@@ -135,16 +135,16 @@ export default function Panels({ children, config }) {
           secondButton.style.display = ""
         }
       }
-      if (autoRotate) {
-        if (
-          (!vertical && container.clientHeight / container.clientWidth > 1) ||
-          (vertical && container.clientWidth / container.clientHeight > 1)
-        ) {
-          setVertical((current) => !current)
-          first.style[orientation] = "100%"
-          second.style[orientation] = "100%"
-        }
-      }
+      // if (autoRotate) {
+      //   if (
+      //     (!vertical && container.clientHeight / container.clientWidth > 1) ||
+      //     (vertical && container.clientWidth / container.clientHeight > 1)
+      //   ) {
+      //     setVertical((current) => !current)
+      //     first.style[orientation] = "100%"
+      //     second.style[orientation] = "100%"
+      //   }
+      // }
     }
 
     containerDimens = vertical ? container.clientHeight : container.clientWidth
@@ -192,7 +192,7 @@ export default function Panels({ children, config }) {
       resizer.removeEventListener("mouseover", onMouseOver)
       resizer.removeEventListener("mouseout", onMouseOut)
     }
-  })
+  },[])
 
   return (
     <div ref={containerRef} className="container">
@@ -202,7 +202,9 @@ export default function Panels({ children, config }) {
         </div>
         {children[0]}
       </div>
-      <div ref={resizeRef} />
+      <div ref={resizeRef}>
+        <div className="separator" />
+      </div>
       <div ref={secondRef} id={ids[1]} className="panel-container">
         <div ref={secondButtonRef}>
           <img src="/assets/icons/double-right.svg" alt="show/hide" width="24" height="24" />

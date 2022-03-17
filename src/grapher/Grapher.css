@@ -1,10 +1,103 @@
-.flex-fill-container {
+.grapher-container {
   display: flex;
   width: 100%;
   height: 100%;
 }
 
-canvas{
-  border-right: 1px solid grey;
-  border-left: 1px solid grey;
+.user-functions-container {
+  font-size: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.menu-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 5px;
+  min-height: 42px;
+  border-bottom: 1px solid grey;
+  overflow: hidden;
+}
+
+.user-functions-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.user-functions-list::-webkit-scrollbar {
+  display: none;
+}
+
+.user-function-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid grey;
+  padding: 10px;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.buttons {
+  display: flex;
+}
+
+.clear,
+.delete,
+.edit {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+
+.clear:hover,
+.delete:hover,
+.edit:hover {
+  background-color: rgba(10, 10, 10, 0.2);
+}
+
+.user-function-item:last-child > div > .delete,
+.user-function-item:last-child > div > .edit {
+  display: none;
+}
+
+.error-message {
+  color: grey;
+  display: flex;
+  flex-flow: row-reverse;
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid grey;
+}
+
+input {
+  font-size: 28px;
+  width: 100%;
+  padding: 10px;
+  outline: none;
+  border: none;
+}
+
+.return {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 5px;
+  margin-right: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

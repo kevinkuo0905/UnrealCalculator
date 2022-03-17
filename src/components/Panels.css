@@ -8,6 +8,7 @@
 .horizontal-resize {
   z-index: 1;
   cursor: col-resize;
+  width: 1px;
   padding: 0px 7px;
   margin: 0px -7px;
 }
@@ -15,8 +16,15 @@
 .vertical-resize {
   z-index: 1;
   cursor: row-resize;
+  height: 1px;
   padding: 7px 0px;
   margin: -7px 0px;
+}
+
+.separator {
+  background-color: grey;
+  width: 100%;
+  height: 100%;
 }
 
 .panel-container {
@@ -30,7 +38,6 @@
   width: 32px;
   height: 32px;
   border-radius: 5px;
-  background-color: rgba(255, 255, 255, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,7 +45,12 @@
 }
 
 .show-hide:hover {
-  background-color: rgba(10, 10, 10, 0.3);
+  background-color: rgba(10, 10, 10, 0.2);
+}
+
+img {
+  user-select: none;
+  pointer-events: none;
 }
 
 .first.horizontal {

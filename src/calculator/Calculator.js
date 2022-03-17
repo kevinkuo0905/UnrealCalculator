@@ -66,7 +66,7 @@ export default function Calculator() {
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
-      containerRef.current.scrollTo(0, 500)
+      containerRef.current.scrollTo(0, containerRef.current.scrollHeight)
       try {
         const tree = createTree(parseInput(userInput))
         if (display(tree) === "") {
@@ -92,6 +92,21 @@ export default function Calculator() {
 
   return (
     <div className="calculator-container">
+      <div className="menu-left">
+        <div className="clear">
+          <img src="/assets/icons/trash.svg" alt="clear" width="24" height="24" />
+        </div>
+      </div>
+      <div ref={containerRef} className="output-container" />
+      <div ref={outputRef} className="output preview">
+        <MathJax inline dynamic>
+          {inputError ? `$\\small{\\textrm{${inputError.message} }}$` : `$${displayInput}$`}
+        </MathJax>
+        <MathJax inline dynamic>
+          {outputError ? `$\\small{\\textrm{${output} }}$` : `$${output}$`}
+        </MathJax>
+      </div>
+
       <div className="input-box">
         <input
           ref={inputRef}
@@ -112,15 +127,6 @@ export default function Calculator() {
           <img src="/assets/icons/arrow-return-left.svg" alt="return" width="24" height="24" />
         </div>
       </div>
-      <div ref={outputRef} className="output preview">
-        <MathJax inline dynamic>
-          {inputError ? `$\\small{\\textrm{${inputError.message} }}$` : `$${displayInput}$`}
-        </MathJax>
-        <MathJax inline dynamic>
-          {outputError ? `$\\small{\\textrm{${output} }}$` : `$${output}$`}
-        </MathJax>
-      </div>
-      <div ref={containerRef} className="output-container" />
     </div>
   )
 }
