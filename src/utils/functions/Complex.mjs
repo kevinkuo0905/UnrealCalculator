@@ -144,7 +144,7 @@ export function ncr(n, r) {
  * Computes the greatest common divisor among the real and imaginary parts.
  */
 const gcd2 = (c1, c2) => {
-  if (divide(c1, c2)[1] === 0) {
+  if (c1[1] !== 0 && c2[1] !== 0 && divide(c1, c2)[1] === 0) {
     if (c1[0] > c2[0]) return c2
     return c1
   }
