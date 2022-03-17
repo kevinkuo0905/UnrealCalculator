@@ -18,8 +18,8 @@
 }
 
 .clear {
-  width: 32px;
-  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 5px;
   display: flex;
   justify-content: center;
@@ -28,7 +28,7 @@
 }
 
 .clear:hover {
-  background-color: rgba(10, 10, 10, 0.2);
+  background-color: lightblue;
 }
 
 .input-box {

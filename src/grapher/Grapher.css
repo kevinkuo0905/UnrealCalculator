@@ -45,15 +45,10 @@
   overflow: hidden;
 }
 
-.buttons {
-  display: flex;
-}
-
 .clear,
-.delete,
-.edit {
-  width: 32px;
-  height: 32px;
+.delete {
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 5px;
   display: flex;
   justify-content: center;
@@ -62,13 +57,16 @@
 }
 
 .clear:hover,
-.delete:hover,
-.edit:hover {
-  background-color: rgba(10, 10, 10, 0.2);
+.delete:hover {
+  background-color: lightblue;
 }
 
-.user-function-item:last-child > div > .delete,
-.user-function-item:last-child > div > .edit {
+.user-function-item:last-child {
+  color: grey;
+  border: none;
+}
+
+.user-function-item:last-child > .delete {
   display: none;
 }
 
@@ -76,6 +74,8 @@
   color: grey;
   display: flex;
   flex-flow: row-reverse;
+  overflow: hidden;
+  padding-bottom: 10px;
 }
 
 .input-box {

@@ -16,9 +16,10 @@ const functionReducer = (userFunctions, { type, payload }) => {
     }
     case "delete":
       return userFunctions.remove(payload.index)
-    case "clear": {
+    case "clear":
       return []
-    }
+    default:
+      throw new Error("bad action")
   }
 }
 
@@ -34,6 +35,8 @@ const displayReducer = (displayFunctions, { type, payload }) => {
       return displayFunctions.remove(payload.index)
     case "clear":
       return [""]
+    default:
+      throw new Error("bad action")
   }
 }
 
@@ -47,8 +50,8 @@ export default function Grapher() {
   }
   const canvasRef = useRef(null)
   const inputRef = useRef(null)
-  const [userFunctions, dispatchFunction] = useReducer(functionReducer, [])
-  const [displayFunctions, dispatchDisplay] = useReducer(displayReducer, [])
+  const [userFunctions, functionDispatcher] = useReducer(functionReducer, [])
+  const [displayFunctions, displayDispatcher] = useReducer(displayReducer, [])
   const [userInput, setUserInput] = useState("")
   const [displayError, setDisplayError] = useState(null)
   const [selectedFunction, setSelectedFunction] = useState(0)
@@ -58,7 +61,7 @@ export default function Grapher() {
     setUserInput(target.value)
     try {
       const tree = createTree(parseInput(target.value))
-      dispatchDisplay({
+      displayDispatcher({
         type: "edit",
         payload: { tree, index: selectedFunction },
       })
@@ -68,23 +71,42 @@ export default function Grapher() {
   }
 
   const editFunction = (index) => {
-    setSelectedFunction(index)
-    setUserInput(userFunctions[index])
+    if (selectedFunction === userFunctions.length) {
+      setUserInput(userFunctions[index])
+      setSelectedFunction(index)
+    } else if (selectedFunction !== index) {
+      try {
+        const tree = createTree(parseInput(userInput))
+        if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
+          functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
+          setUserInput(userFunctions[index])
+          setSelectedFunction(index)
+        } else {
+          setDisplayError({ message: "Must be a constant or function of x only." })
+        }
+      } catch (error) {
+        setDisplayError(error)
+      }
+    }
+    inputRef.current.focus()
   }
 
-  const deleteFunction = (index) => {
+  const deleteFunction = (event, index) => {
+    event.stopPropagation()
     setSelectedFunction(userFunctions.length - 1)
     setUserInput("")
-    dispatchFunction({ type: "delete", payload: { index } })
-    dispatchDisplay({ type: "delete", payload: { index } })
+    functionDispatcher({ type: "delete", payload: { index } })
+    displayDispatcher({ type: "delete", payload: { index } })
+    setDisplayError(null)
   }
 
   const clearAll = () => {
     if (window.confirm("Clear all functions?")) {
       setUserInput("")
       setSelectedFunction(0)
-      dispatchFunction({ type: "clear" })
-      dispatchDisplay({ type: "clear" })
+      functionDispatcher({ type: "clear" })
+      displayDispatcher({ type: "clear" })
+      setDisplayError(null)
     }
   }
 
@@ -94,16 +116,16 @@ export default function Grapher() {
         const tree = createTree(parseInput(userInput))
         if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
           if (selectedFunction === userFunctions.length) {
-            dispatchFunction({ type: "submit", payload: { userInput } })
-            dispatchDisplay({ type: "add-blank" })
+            functionDispatcher({ type: "submit", payload: { userInput } })
+            displayDispatcher({ type: "add-blank" })
             setSelectedFunction((current) => ++current)
           } else {
-            dispatchFunction({ type: "edit", payload: { userInput, index: selectedFunction } })
+            functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
             setSelectedFunction(userFunctions.length)
           }
           setUserInput("")
         } else {
-          setDisplayError({ message: "Must be a function of only x." })
+          setDisplayError({ message: "Must be a constant or function of x only." })
         }
       } catch (error) {
         setDisplayError(error)
@@ -112,29 +134,59 @@ export default function Grapher() {
 
     ArrowUp: () => {
       if (userFunctions[selectedFunction - 1]) {
-        setUserInput(userFunctions[selectedFunction - 1])
-        setSelectedFunction((current) => --current)
+        if (selectedFunction === userFunctions.length) {
+          setUserInput(userFunctions[selectedFunction - 1])
+          setSelectedFunction((current) => --current)
+        } else {
+          try {
+            const tree = createTree(parseInput(userInput))
+            if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
+              functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
+              setUserInput(userFunctions[selectedFunction - 1])
+              setSelectedFunction((current) => --current)
+            } else {
+              setDisplayError({ message: "Must be a constant or function of x only." })
+            }
+          } catch (error) {
+            setDisplayError(error)
+          }
+        }
       }
     },
 
     ArrowDown: () => {
       if (displayFunctions[selectedFunction]) {
-        setUserInput(userFunctions[selectedFunction + 1] || "")
-        setSelectedFunction((current) => ++current)
+        if (selectedFunction === userFunctions.length) {
+          setUserInput(userFunctions[selectedFunction + 1] || "")
+          setSelectedFunction((current) => ++current)
+        } else {
+          try {
+            const tree = createTree(parseInput(userInput))
+            if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
+              functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
+              setUserInput(userFunctions[selectedFunction + 1] || "")
+              setSelectedFunction((current) => ++current)
+            } else {
+              setDisplayError({ message: "Must be a constant or function of x only." })
+            }
+          } catch (error) {
+            setDisplayError(error)
+          }
+        }
       }
     },
 
     Escape: () => {
       if (selectedFunction !== userFunctions.length) {
         const tree = createTree(parseInput(userFunctions[selectedFunction]))
-        dispatchDisplay({
+        displayDispatcher({
           type: "edit",
           payload: { tree, index: selectedFunction },
         })
         setSelectedFunction(userFunctions.length)
       } else {
         const tree = createTree(parseInput(""))
-        dispatchDisplay({
+        displayDispatcher({
           type: "edit",
           payload: { tree, index: selectedFunction },
         })
@@ -149,7 +201,7 @@ export default function Grapher() {
   })
 
   useEffect(() => {
-    setTimeout(() => dispatchDisplay({ type: "add-blank" }), 100)
+    setTimeout(() => displayDispatcher({ type: "add-blank" }), 100)
   }, [])
 
   return (
@@ -168,7 +220,12 @@ export default function Grapher() {
             {displayFunctions.map((displayFunction, i) => (
               <div
                 key={i}
-                style={selectedFunction === i ? { color: "grey",border:"none" } : null}
+                onClick={() => editFunction(i)}
+                style={
+                  selectedFunction === i && userFunctions.length !== i
+                    ? { backgroundColor: "cyan", color: "grey" }
+                    : null
+                }
                 className="user-function-item"
               >
                 <div className="overflow-hidden">
@@ -176,13 +233,8 @@ export default function Grapher() {
                     {`$f_{${i + 1}}=${displayFunction}$`}
                   </MathJax>
                 </div>
-                <div className="buttons">
-                  <div onClick={() => editFunction(i)} className="edit">
-                    <img src="/assets/icons/pencil.svg" alt="edit" width="24" height="24" />
-                  </div>
-                  <div onClick={() => deleteFunction(i)} className="delete">
-                    <img src="/assets/icons/cross.svg" alt="delete" width="24" height="24" />
-                  </div>
+                <div onClick={(event) => deleteFunction(event, i)} className="delete">
+                  <img src="/assets/icons/cross.svg" alt="delete" width="24" height="24" />
                 </div>
               </div>
             ))}
