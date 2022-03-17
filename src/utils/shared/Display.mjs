@@ -2,25 +2,25 @@
  * Outputs are processed into TeX format for use by the MathJAX library for displaying math.
  */
 
+import { floor, isInteger } from "../functions/Real.mjs"
+
 /**
  * Cleans up result from TeX output.
  * @param {Array | Expression} result preprocessed output from user input
  * @param {Number} n number of digits to round to
  * @returns {String} cleaned up result in TeX format
  */
-export default function display(result, n=16) {
+export default function display(result, n) {
   if (Array.isArray(result)) return displayComplex(result, n)
   return toTeX(result, n)
     .replace(/\+-/g, "-")
-    .replace(/(?<![\d.])1([a-z\\](?!cdot|right))/g, "$1")
+    .replace(/(?<![\d.])1([a-z{\\](?!cdot|right))/g, "$1")
 }
 
 const trigInverse = ["arcsin", "arccos", "arctan", "arccsc", "arcsec", "arccot"]
 
-const floor = (x) => (x < 1 && x >= 0 ? 0 : x - (((x % 1) + 1) % 1))
-
 const round = (x, n) => {
-  if (x === Infinity || x === -Infinity) return x
+  if (isInteger(x) || x === Infinity || x === -Infinity) return x
   let places = 1
   for (let i = 0; i < n; i++) {
     places *= 10
@@ -54,13 +54,13 @@ const displayComplex = (c, n = 12) => {
     .replace(/Infinity/g, "\\infty ")
     .replace(/([1-9]+\.?\d*)e([+-]\d{1,3})/g, "$1\\cdot10^{$2}")
     .replace(/\{\+/, "{")
+    .replace(/\+-/g, "-")
 }
 
 /**
  * Checks for whether the ith arg is to be wrapped in parentheses.
  */
-const needsParen = ({ args }, i, pow = false) =>
-  (pow && args[i].operation.name === "divide") ||
+const needsParen = ({ args }, i) =>
   args[i].operation.name === "add" ||
   args[i].operation.name === "subtract" ||
   (Array.isArray(args[i].args[0]) && args[i].args[0][0] !== 0 && args[i].args[0][1] !== 0)
@@ -140,7 +140,8 @@ const rules = {
 
   pow: ({ args }, n) => {
     const mappedArgs = args.map((arg) => toTeX(arg, n))
-    if (needsParen({ args }, 0, true)) return `\\left(${mappedArgs[0]}\\right)^{${mappedArgs[1]}}`
+    if (args[0].operation.name !== "identity")
+      return `\\left(${mappedArgs[0]}\\right)^{${mappedArgs[1]}}`
     return `{${mappedArgs[0]}}^{${mappedArgs[1]}}`
   },
 

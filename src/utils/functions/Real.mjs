@@ -171,7 +171,7 @@ const expT = (x) => {
  */
 export function exp(x) {
   if (x > 1000) return inf
-  if (x === -inf) return 0
+  if (x < -1000) return 0
   if (x === 0) return 1
   return intPow(expT(x / ceil((sgn(x) * x) / 2)), ceil((sgn(x) * x) / 2))
 }
@@ -253,15 +253,15 @@ export function pow(x, y) {
   }
   if (b > intPow(10, 8)) {
     if (a > 1.01) return inf
-    if (a > 0 && a < 1) return 0
+    if (a > 0 && a < 0.99) return 0
     if (a < 0) return NaN
   }
   if (b < -intPow(10, 8)) {
     if (a > 1.01) return 0
-    if (a >= 0 && a < 1) return inf
+    if (a >= 0 && a < 0.99) return inf
     if (a < 0) return NaN
   }
-  if ((abs(a) > 1.01 || abs(a) < 1) && isInteger(b)) {
+  if ((abs(a) > 1.01 || abs(a) < 0.99) && isInteger(b)) {
     return intPow(x, b)
   }
   if (a > 0) {

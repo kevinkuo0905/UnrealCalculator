@@ -401,6 +401,13 @@ const rules = {
       args.map((arg) => simplify(arg, options))
     )
   },
+
+  sqrt: ({ args }, options) => {
+    return newExp(
+      "sqrt",
+      args.map((arg) => simplify(arg, options))
+    )
+  },
 }
 
 // const factor = true

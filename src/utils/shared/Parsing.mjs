@@ -197,16 +197,20 @@ const parseBinaryOp = (userInput, opName, opIndex) => {
     const parenIndex = matchParen(userInput, opIndex + 1)
     secondParamEnd = userInput.indexOf(")", parenIndex)
     secondParam = userInput.slice(opIndex + 2, secondParamEnd)
-  } else if (!userInput[opIndex + 1] || /[+*/^,\)]/.test(userInput[opIndex + 1])) {
+  } else if (!userInput[opIndex + 1] || /[+*/^,)]/.test(userInput[opIndex + 1])) {
     secondParamEnd = opIndex
     secondParam = ""
   } else {
     // checks formats x#func(y), x#-(y), and x#-func(y)
     let i = 1
-    while (userInput[opIndex + i] && userInput[opIndex + i] !== "(") {
+    while (
+      userInput[opIndex + i] &&
+      userInput[opIndex + i] !== "(" &&
+      userInput[opIndex + i] !== ","
+    ) {
       i++
     }
-    if (!userInput[opIndex + i]) {
+    if (!userInput[opIndex + i] || userInput[opIndex + i] === ",") {
       secondParamEnd = opIndex
       secondParam = ""
     } else {
