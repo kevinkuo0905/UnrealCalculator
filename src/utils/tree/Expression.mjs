@@ -120,8 +120,8 @@ export default class Expression {
   isNumber() {
     try {
       return Array.isArray(this.evaluate())
-    } catch (err) {
-      if (err) return false
+    } catch {
+      return false
     }
   }
 

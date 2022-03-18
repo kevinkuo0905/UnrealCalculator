@@ -26,6 +26,7 @@ const displayReducer = (displayFunctions, { type, payload }) => {
 
 export default function FunctionsList({ userFunctions, functionDispatcher }) {
   const inputRef = useRef(null)
+  const listRef = useRef(null)
   const [displayFunctions, displayDispatcher] = useReducer(displayReducer, [])
   const [userInput, setUserInput] = useState("")
   const [displayError, setDisplayError] = useState(null)
@@ -40,7 +41,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
         type: "edit",
         payload: { tree, index: selectedFunction },
       })
-      console.log(display(tree))
     } catch (error) {
       setDisplayError(error)
     }
@@ -91,25 +91,31 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
 
   const keyEvents = {
     Enter: () => {
-      try {
-        const tree = createTree(parseInput(userInput))
-        if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
-          if (selectedFunction === userFunctions.length) {
-            functionDispatcher({ type: "submit", payload: { userInput } })
-            displayDispatcher({ type: "add-blank" })
+      if (!userInput.trim()) {
+        setUserInput("")
+        inputRef.current.placeholder = "Enter something..."
+        setTimeout(() => (inputRef.current.placeholder = "Input"), 1500)
+      } else {
+        try {
+          const tree = createTree(parseInput(userInput))
+          if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
+            if (selectedFunction === userFunctions.length) {
+              functionDispatcher({ type: "submit", payload: { userInput } })
+              displayDispatcher({ type: "add-blank" })
 
-            setSelectedFunction((current) => ++current)
+              setSelectedFunction((current) => ++current)
+            } else {
+              functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
+
+              setSelectedFunction(userFunctions.length)
+            }
+            setUserInput("")
           } else {
-            functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-
-            setSelectedFunction(userFunctions.length)
+            setDisplayError({ message: "Must be a constant or function of x only." })
           }
-          setUserInput("")
-        } else {
-          setDisplayError({ message: "Must be a constant or function of x only." })
+        } catch (error) {
+          setDisplayError(error)
         }
-      } catch (error) {
-        setDisplayError(error)
       }
     },
 
@@ -184,6 +190,13 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
   }, [])
 
   useEffect(() => {
+    const selected = listRef.current.children.item(selectedFunction)
+    if (selected) {
+      selected.scrollIntoView()
+    }
+  }, [selectedFunction])
+
+  useEffect(() => {
     setTimeout(() => {
       displayDispatcher({ type: "examples", payload: { examples: examples.displayFunctions } })
       functionDispatcher({ type: "examples", payload: { examples: examples.userFunctions } })
@@ -191,7 +204,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
 
       setSelectedFunction(examples.userFunctions.length)
     }, 200)
-
   }, [])
 
   return (
@@ -201,7 +213,7 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
           <img src="/assets/icons/trash.svg" alt="clear" width="24" height="24" />
         </div>
       </div>
-      <div className="user-functions-list">
+      <div ref={listRef} className="user-functions-list">
         {displayFunctions.map((displayFunction, i) => (
           <div
             key={i}

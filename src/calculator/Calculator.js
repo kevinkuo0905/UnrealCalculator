@@ -34,7 +34,6 @@ export default function Calculator() {
         outputRef.current.style.transition = "none"
         renderedOutput.classList.remove("preview")
         containerRef.current.appendChild(renderedOutput)
-        renderedOutput.scrollIntoView()
         inputRef.current.focus()
         setInputHistory([userInput, ...inputHistory])
         setUserInput("")
@@ -79,7 +78,6 @@ export default function Calculator() {
     } else {
       outputRef.current.style.transition = ""
       outputRef.current.classList.remove("hidden")
-      containerRef.current.scrollTo(0, containerRef.current.scrollHeight)
       try {
         const tree = createTree(parseInput(userInput))
         setDisplayInput(display(tree))
@@ -97,6 +95,10 @@ export default function Calculator() {
         setOutputError(error)
       }
     }
+  }, [userInput])
+
+  useEffect(() => {
+    containerRef.current.lastChild.scrollIntoView()
   }, [userInput])
 
   useEffect(() => {
