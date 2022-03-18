@@ -17,53 +17,6 @@
   overflow: hidden;
 }
 
-.clear {
-  min-width: 32px;
-  min-height: 32px;
-  border-radius: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  user-select: none;
-}
-
-.clear:hover {
-  background-color: lightblue;
-}
-
-.input-box {
-  display: flex;
-  align-items: center;
-  border-top: 1px solid grey;
-}
-
-input {
-  font-size: 28px;
-  width: 100%;
-  padding: 10px;
-  outline: none;
-  border: none;
-}
-
-.return {
-  min-width: 32px;
-  min-height: 32px;
-  border-radius: 5px;
-  margin-right: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.return:hover {
-  background-color: rgba(10, 10, 10, 0.2);
-}
-
-img {
-  user-select: none;
-  pointer-events: none;
-}
-
 .output {
   display: flex;
   flex-direction: column;
