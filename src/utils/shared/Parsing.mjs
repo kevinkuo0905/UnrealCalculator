@@ -9,7 +9,7 @@
  * and variables are enclosed in parentheses, and adding a negative is replaced with subtract.
  */
 const parseConst = (userInput) => {
-  const found = userInput.search(/[~`@#$&_[\]{}\\;:'"<>?]/)
+  const found = userInput.search(/[~`@#$%&_[\]{}\\;:'"<>?]/)
   const escapeDelimiter = userInput[found] === "$" ? "\\$" : userInput[found]
   if (found !== -1) throw new SyntaxError(`Forbidden character: ${escapeDelimiter}`)
   return userInput
@@ -272,7 +272,7 @@ const parseComplexOp = (userInput, opSymbol, opName) => {
  */
 export const parseInput = (userInput) => {
   userInput = parseDifferential(verifyInput(parseConst(userInput)))
-  userInput = parseCaret(parseFactorial(parseImplied(userInput)))
+  userInput = parseCaret(parseImplied(parseFactorial(userInput)))
   userInput = parseComplexOp(userInput, "/", "divide")
   userInput = parseComplexOp(userInput, "*", "multiply")
   userInput = parseComplexOp(userInput, "-", "subtract")

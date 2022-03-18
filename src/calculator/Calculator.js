@@ -43,7 +43,7 @@ export default function Calculator() {
         if (!userInput.trim()) {
           setUserInput("")
           inputRef.current.placeholder = "Enter something..."
-          setTimeout(() => (inputRef.current.placeholder = "Input"), 1000)
+          setTimeout(() => (inputRef.current.placeholder = "Input"), 1500)
         }
         if (!inputError && userInput.trim()) setOutput(`${outputError.message}`)
       }
@@ -82,11 +82,7 @@ export default function Calculator() {
       containerRef.current.scrollTo(0, containerRef.current.scrollHeight)
       try {
         const tree = createTree(parseInput(userInput))
-        if (display(tree) === "") {
-          setDisplayInput(" ")
-        } else {
-          setDisplayInput(display(tree))
-        }
+        setDisplayInput(display(tree))
         setInputError(null)
       } catch (error) {
         setDisplayInput(userInput)

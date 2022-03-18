@@ -98,8 +98,7 @@ const rules = {
   multiply: ({ args }, n) => {
     const mappedArgs = args.map((arg, i) => {
       if (needsParen({ args }, i)) return `\\left(${toTeX(arg, n)}\\right)`
-      const mathConsts = ["e", "\\pi ", "i", "\\infty "]
-      if (i !== 0 && (/\d|-/.test(toTeX(arg, n)[0]) || mathConsts.includes(toTeX(arg, n))))
+      if (i !== 0 && (/\d|-/.test(toTeX(arg, n)[0])))
         return `\\cdot ${toTeX(arg, n)}`
       return toTeX(arg, n)
     })

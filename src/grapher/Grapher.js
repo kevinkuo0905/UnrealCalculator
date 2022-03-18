@@ -79,7 +79,7 @@ export default function Grapher() {
         const tree = createTree(parseInput(userInput))
         if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
           functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-          setUserInput(userFunctions[index])
+          setUserInput(userFunctions[index] || "")
           setSelectedFunction(index)
         } else {
           setDisplayError({ message: "Must be a constant or function of x only." })
