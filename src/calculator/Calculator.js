@@ -1,8 +1,9 @@
-import React, { useRef, useState, useLayoutEffect } from "react"
+import React, { useRef, useState, useLayoutEffect, useEffect } from "react"
 import { MathJax } from "better-react-mathjax"
 import { parseInput } from "../utils/shared/Parsing.mjs"
 import createTree from "../utils/tree/CreateTree.mjs"
 import display from "../utils/shared/Display.mjs"
+import { examples } from "../examples/Examples.js"
 import "./Calculator.css"
 
 export default function Calculator() {
@@ -16,6 +17,15 @@ export default function Calculator() {
   const [outputError, setOutputError] = useState(null)
   const [inputHistory, setInputHistory] = useState([])
   const [currentItem, setCurrentItem] = useState(-1)
+  const [sample, setSample] = useState([])
+
+  const clearAll = () => {
+    if (window.confirm("Clear all calculations and history?")) {
+      setUserInput("")
+      containerRef.current.textContent = ""
+      setInputHistory([])
+    }
+  }
 
   const keyEvents = {
     Enter: () => {
@@ -33,7 +43,7 @@ export default function Calculator() {
         if (!userInput.trim()) {
           setUserInput("")
           inputRef.current.placeholder = "Enter something..."
-          setTimeout(() => (inputRef.current.placeholder = "Input"), 2000)
+          setTimeout(() => (inputRef.current.placeholder = "Input"), 1000)
         }
         if (!inputError && userInput.trim()) setOutput(`${outputError.message}`)
       }
@@ -50,6 +60,9 @@ export default function Calculator() {
       if (inputHistory[currentItem - 1]) {
         setUserInput(inputHistory[currentItem - 1])
         setCurrentItem((current) => --current)
+      } else {
+        setUserInput("")
+        setCurrentItem(-1)
       }
     },
 
@@ -90,14 +103,35 @@ export default function Calculator() {
     }
   }, [userInput])
 
+  useEffect(() => {
+    setTimeout(() => {
+      setSample(
+        examples.inputHistory.map((input, i) => {
+          const tree = createTree(parseInput(input))
+          return (
+            <div key={i} className="output">
+              <MathJax inline dynamic>{`$${display(tree)}$`}</MathJax>
+              <MathJax inline dynamic>{`$${display(tree.evaluate())}$`}</MathJax>
+            </div>
+          )
+        })
+      )
+    }, 200)
+    setInputHistory(examples.inputHistory.map((input, i, array) => array[array.length - 1 - i]))
+    inputRef.current.focus()
+  }, [])
+
   return (
     <div className="calculator-container">
       <div className="menu-left">
-        <div className="clear">
+        <div onClick={clearAll} className="clear">
           <img src="/assets/icons/trash.svg" alt="clear" width="24" height="24" />
         </div>
       </div>
-      <div ref={containerRef} className="output-container" />
+      <div ref={containerRef} className="output-container">
+        <div className="output">Examples:</div>
+        {sample}
+      </div>
       <div ref={outputRef} className="output preview">
         <MathJax inline dynamic>
           {inputError ? `$\\small{\\textrm{${inputError.message} }}$` : `$${displayInput}$`}
@@ -106,7 +140,6 @@ export default function Calculator() {
           {outputError ? `$\\small{\\textrm{${output} }}$` : `$${output}$`}
         </MathJax>
       </div>
-
       <div className="input-box">
         <input
           ref={inputRef}

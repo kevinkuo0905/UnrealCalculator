@@ -204,6 +204,11 @@ export default function Grapher() {
     setTimeout(() => displayDispatcher({ type: "add-blank" }), 100)
   }, [])
 
+  const editting = (i) =>
+    selectedFunction === i && userFunctions.length !== i
+      ? { backgroundColor: "cyan", color: "grey" }
+      : null
+
   return (
     <div className="grapher-container">
       <Panels config={panelsConfig}>
@@ -221,11 +226,7 @@ export default function Grapher() {
               <div
                 key={i}
                 onClick={() => editFunction(i)}
-                style={
-                  selectedFunction === i && userFunctions.length !== i
-                    ? { backgroundColor: "cyan", color: "grey" }
-                    : null
-                }
+                style={editting(i)}
                 className="user-function-item"
               >
                 <div className="overflow-hidden">
