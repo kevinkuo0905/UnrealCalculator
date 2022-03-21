@@ -119,7 +119,7 @@ export default class Expression {
 
   isNumber() {
     try {
-      return Array.isArray(this.evaluate())
+      return !(this.evaluate() instanceof Expression)
     } catch {
       return false
     }

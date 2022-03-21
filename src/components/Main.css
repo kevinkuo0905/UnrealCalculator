@@ -1,11 +1,12 @@
 main {
   display: flex;
   flex-direction: column;
-  height: 95%;
+  height: 100vh;
 }
 
 .clear,
-.delete {
+.delete,
+.settings {
   min-width: 32px;
   min-height: 32px;
   border-radius: 5px;
@@ -16,7 +17,8 @@ main {
 }
 
 .clear:hover,
-.delete:hover {
+.delete:hover,
+.settings:hover {
   background-color: lightblue;
 }
 
@@ -26,7 +28,7 @@ main {
   border-top: 1px solid grey;
 }
 
-input {
+.input-box > input {
   font-size: 28px;
   width: 100%;
   padding: 10px;

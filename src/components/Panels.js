@@ -1,5 +1,6 @@
 import React, { useRef, useState, useLayoutEffect } from "react"
-import { min, max } from "../utils/functions/Real.mjs"
+import { useResizeObserver } from "../utils/UseResizeObserver.js"
+import { min, max } from "../utils/math/functions/Real.mjs"
 import "./Panels.css"
 
 export default function Panels({ children, config }) {
@@ -21,8 +22,46 @@ export default function Panels({ children, config }) {
   const secondRef = useRef(null)
   const firstButtonRef = useRef(null)
   const secondButtonRef = useRef(null)
-
   const [vertical, setVertical] = useState(column)
+  const containerBounds = useResizeObserver(containerRef)
+
+  useLayoutEffect(() => {
+    const orientation = vertical ? "height" : "width"
+    const first = firstRef.current
+    const second = secondRef.current
+    first.style[orientation] = `${percentage}%`
+    second.style[orientation] = `${100 - percentage}%`
+  }, [vertical, percentage])
+
+  useLayoutEffect(() => {
+    const orientation = vertical ? "height" : "width"
+    const container = containerRef.current
+    const first = firstRef.current
+    const second = secondRef.current
+    const firstButton = firstButtonRef.current
+    const secondButton = secondButtonRef.current
+
+    if (autoRotate) {
+      setVertical(container.clientHeight / container.clientWidth > 1)
+      first.style[vertical ? "width" : "height"] = "100%"
+      second.style[vertical ? "width" : "height"] = "100%"
+    }
+
+    let containerDimens = vertical ? container.clientHeight : container.clientWidth
+
+    if (containerDimens < onePanelOnlyMaxDimens) {
+      if (onePanelDefault === 1) {
+        second.style[orientation] = "0%"
+        first.style[orientation] = "100%"
+        firstButton.style.display = ""
+      }
+      if (onePanelDefault === 2) {
+        first.style[orientation] = "0%"
+        second.style[orientation] = "100%"
+        secondButton.style.display = ""
+      }
+    }
+  }, [containerBounds, autoRotate, vertical, onePanelOnlyMaxDimens, onePanelDefault])
 
   useLayoutEffect(() => {
     const orientation = vertical ? "height" : "width"
@@ -33,12 +72,6 @@ export default function Panels({ children, config }) {
     const firstButton = firstButtonRef.current
     const secondButton = secondButtonRef.current
     let containerDimens, firstDimens, secondDimens, point
-
-    // if (autoRotate) {
-    //   setVertical(container.clientHeight / container.clientWidth > 1)
-    //   first.style[vertical ? "width" : "height"] = "100%"
-    //   second.style[vertical ? "width" : "height"] = "100%"
-    // }
 
     const onMouseDownResize = (event) => {
       if (event.button === 0) {
@@ -100,7 +133,7 @@ export default function Panels({ children, config }) {
         first.style[orientation] = `${percentage}%`
         second.style[orientation] = `${100 - percentage}%`
 
-        resizer.style.display = ""
+        resizer.style.pointerEvents = ""
         firstButton.style.display = ""
         secondButton.style.display = ""
 
@@ -117,63 +150,23 @@ export default function Panels({ children, config }) {
           firstButton.style.display = ""
         }
         currentTarget.style.display = "none"
-        resizer.style.display = "none"
-      }
-    }
-
-    const onContainerResize = () => {
-      containerDimens = vertical ? container.clientHeight : container.clientWidth
-      if (containerDimens < onePanelOnlyMaxDimens) {
-        if (onePanelDefault === 1 && second.style[orientation] !== "100%") {
-          second.style[orientation] = "0%"
-          first.style[orientation] = "100%"
-          firstButton.style.display = ""
-        }
-        if (onePanelDefault === 2 && first.style[orientation] !== "100%") {
-          first.style[orientation] = "0%"
-          second.style[orientation] = "100%"
-          secondButton.style.display = ""
-        }
-      }
-      // if (autoRotate) {
-      //   if (
-      //     (!vertical && container.clientHeight / container.clientWidth > 1) ||
-      //     (vertical && container.clientWidth / container.clientHeight > 1)
-      //   ) {
-      //     setVertical((current) => !current)
-      //     first.style[orientation] = "100%"
-      //     second.style[orientation] = "100%"
-      //   }
-      // }
-    }
-
-    containerDimens = vertical ? container.clientHeight : container.clientWidth
-    if (containerDimens > onePanelOnlyMaxDimens) {
-      first.style[orientation] = `${percentage}%`
-      second.style[orientation] = `${100 - percentage}%`
-    } else {
-      if (onePanelDefault === 1) {
-        second.style[orientation] = "0%"
-        first.style[orientation] = "100%"
-        firstButton.style.display = ""
-      }
-      if (onePanelDefault === 2) {
-        first.style[orientation] = "0%"
-        second.style[orientation] = "100%"
-        secondButton.style.display = ""
+        resizer.style.pointerEvents = "none"
       }
     }
 
     container.style.flexDirection = vertical ? "column" : "row"
-    window.addEventListener("resize", onContainerResize)
 
     resizer.className = vertical ? "vertical-resize" : "horizontal-resize"
     resizer.addEventListener("mousedown", onMouseDownResize)
     resizer.addEventListener("mouseover", onMouseOver)
     resizer.addEventListener("mouseout", onMouseOut)
 
-    if (alwaysShowFirst) firstButton.style.display = "none"
-    if (alwaysShowSecond) secondButton.style.display = "none"
+    if (alwaysShowFirst && first.style[orientation] !== "100%") {
+      firstButton.style.display = "none"
+    }
+    if (alwaysShowSecond && second.style[orientation] !== "100%") {
+      secondButton.style.display = "none"
+    }
 
     firstButton.className = "show-hide first"
     secondButton.className = "show-hide second"
@@ -185,14 +178,13 @@ export default function Panels({ children, config }) {
     secondButton.addEventListener("click", onMouseClick)
 
     return () => {
-      window.removeEventListener("resize", onContainerResize)
       firstButton.removeEventListener("click", onMouseClick)
       secondButton.removeEventListener("click", onMouseClick)
       resizer.removeEventListener("mousedown", onMouseDownResize)
       resizer.removeEventListener("mouseover", onMouseOver)
       resizer.removeEventListener("mouseout", onMouseOut)
     }
-  },[])
+  })
 
   return (
     <div ref={containerRef} className="container">

@@ -1,8 +1,8 @@
 import React, { useRef, useState, useLayoutEffect, useEffect } from "react"
 import { MathJax } from "better-react-mathjax"
-import { parseInput } from "../utils/shared/Parsing.mjs"
-import createTree from "../utils/tree/CreateTree.mjs"
-import display from "../utils/shared/Display.mjs"
+import { parseInput } from "../utils/math/shared/Parsing.mjs"
+import createTree from "../utils/math/tree/CreateTree.mjs"
+import display from "../utils/math/shared/Display.mjs"
 import { examples } from "../examples/Examples.js"
 import "./Calculator.css"
 
@@ -95,28 +95,28 @@ export default function Calculator() {
         setOutputError(error)
       }
     }
-  }, [userInput])
-
-  useEffect(() => {
-    containerRef.current.lastChild.scrollIntoView()
+    const current = containerRef.current.lastChild
+    if (current) current.scrollIntoView()
   }, [userInput])
 
   useEffect(() => {
     setTimeout(() => {
-      setSample(
-        examples.inputHistory.map((input, i) => {
-          const tree = createTree(parseInput(input))
+      setSample([
+        <div key={-1} className="output">
+          Examples:
+        </div>,
+        ...examples.inputHistory.map((input, i, array) => {
+          const tree = createTree(parseInput(array[array.length - 1 - i]))
           return (
             <div key={i} className="output">
               <MathJax inline dynamic>{`$${display(tree)}$`}</MathJax>
               <MathJax inline dynamic>{`$${display(tree.evaluate())}$`}</MathJax>
             </div>
           )
-        })
-      )
-    }, 200)
-    setInputHistory(examples.inputHistory.map((input, i, array) => array[array.length - 1 - i]))
-    inputRef.current.focus()
+        }),
+      ])
+    }, 400)
+    setInputHistory(examples.inputHistory)
   }, [])
 
   return (
@@ -127,7 +127,6 @@ export default function Calculator() {
         </div>
       </div>
       <div ref={containerRef} className="output-container">
-        <div className="output">Examples:</div>
         {sample}
       </div>
       <div ref={outputRef} className="output preview">

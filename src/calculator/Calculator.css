@@ -1,5 +1,6 @@
 .calculator-container {
   font-size: 24px;
+  background-color: white;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

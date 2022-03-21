@@ -1,7 +1,6 @@
 import React from "react"
 import { MathJaxContext } from "better-react-mathjax"
 import Main from "./components/Main"
-import Header from "./components/Header"
 import "./App.css"
 
 function App() {
@@ -18,7 +17,6 @@ function App() {
   return (
     <MathJaxContext src={src} config={mathConfig}>
       <div id="container">
-        <Header />
         <Main />
       </div>
     </MathJaxContext>

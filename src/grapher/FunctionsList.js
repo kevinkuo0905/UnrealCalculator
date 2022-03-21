@@ -1,9 +1,9 @@
 import React, { useRef, useReducer, useState, useEffect } from "react"
 import { MathJax } from "better-react-mathjax"
-import { parseInput } from "../utils/shared/Parsing.mjs"
-import createTree from "../utils/tree/CreateTree.mjs"
-import display from "../utils/shared/Display.mjs"
 import { examples } from "../examples/Examples.js"
+import { parseInput } from "../utils/math/shared/Parsing.mjs"
+import createTree from "../utils/math/tree/CreateTree.mjs"
+import display from "../utils/math/shared/Display.mjs"
 
 const displayReducer = (displayFunctions, { type, payload }) => {
   switch (type) {
@@ -55,7 +55,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
         const tree = createTree(parseInput(userInput))
         if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
           functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-
           setUserInput(userFunctions[index] || "")
           setSelectedFunction(index)
         } else {
@@ -72,7 +71,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
     event.stopPropagation()
     functionDispatcher({ type: "delete", payload: { index } })
     displayDispatcher({ type: "delete", payload: { index } })
-
     setUserInput("")
     setSelectedFunction(userFunctions.length - 1)
     setDisplayError(null)
@@ -82,7 +80,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
     if (window.confirm("Clear all functions?")) {
       functionDispatcher({ type: "clear" })
       displayDispatcher({ type: "clear" })
-
       setUserInput("")
       setSelectedFunction(0)
       setDisplayError(null)
@@ -102,11 +99,9 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
             if (selectedFunction === userFunctions.length) {
               functionDispatcher({ type: "submit", payload: { userInput } })
               displayDispatcher({ type: "add-blank" })
-
               setSelectedFunction((current) => ++current)
             } else {
               functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-
               setSelectedFunction(userFunctions.length)
             }
             setUserInput("")
@@ -129,7 +124,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
             const tree = createTree(parseInput(userInput))
             if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
               functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-
               setUserInput(userFunctions[selectedFunction - 1])
               setSelectedFunction((current) => --current)
             } else {
@@ -152,7 +146,6 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
             const tree = createTree(parseInput(userInput))
             if (tree.isNumber() || tree.evaluate().isFunctionOf("x", true)) {
               functionDispatcher({ type: "edit", payload: { userInput, index: selectedFunction } })
-
               setUserInput(userFunctions[selectedFunction + 1] || "")
               setSelectedFunction((current) => ++current)
             } else {
@@ -201,10 +194,9 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
       displayDispatcher({ type: "examples", payload: { examples: examples.displayFunctions } })
       functionDispatcher({ type: "examples", payload: { examples: examples.userFunctions } })
       displayDispatcher({ type: "add-blank" })
-
       setSelectedFunction(examples.userFunctions.length)
     }, 200)
-  }, [])
+  }, [functionDispatcher])
 
   return (
     <div className="user-functions-container">
@@ -220,7 +212,7 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
             onClick={() => editFunction(i)}
             style={
               selectedFunction === i && userFunctions.length !== i
-                ? { border: "1px solid black", color: "grey" }
+                ? { border: "1px solid black", color: "blue" }
                 : null
             }
             className="user-function-item"
