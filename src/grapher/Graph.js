@@ -5,16 +5,64 @@ import { parseInput } from "../utils/math/shared/Parsing.mjs"
 import createTree from "../utils/math/tree/CreateTree.mjs"
 import { diff } from "../utils/math/functions/Symbolic.mjs"
 
+const generateBezier = (
+  xMin,
+  xMax,
+  yMin,
+  yMax,
+  canvasWidth,
+  canvasHeight,
+  n,
+  userFunction,
+  derivative
+) => {
+  const xCoordinates = []
+  const yCoordinates = []
+  const slopes = []
+  const xBeziers1 = []
+  const yBeziers1 = []
+  const xBeziers2 = []
+  const yBeziers2 = []
+  const result = []
+
+  const domain = xMax - xMin
+  const range = yMax - yMin
+  const dx = domain / n
+  const thirds = dx / 3
+
+  for (let i = 0; i <= n; i++) {
+    const xCoordinate = xMin + i * dx
+    xCoordinates.push(xCoordinate)
+    xBeziers1.push(xCoordinate + thirds)
+    xBeziers2.push(xCoordinate - thirds)
+    yCoordinates.push(userFunction(xCoordinate))
+
+    slopes.push(derivative(xCoordinate))
+    yBeziers1.push(yCoordinates[i] + slopes[i] * thirds)
+    yBeziers2.push(yCoordinates[i] - slopes[i] * thirds)
+  }
+  const toCanvas = (x, y) => {
+    const xConversion = canvasWidth / domain
+    const yConversion = canvasHeight / range
+    return [(x - xMin) * xConversion, canvasHeight - (y - yMin) * yConversion]
+  }
+  const startingPoint = toCanvas(xCoordinates[0], yCoordinates[0])
+  for (let i = 0; i < n; i++) {
+    result.push([
+      ...toCanvas(xBeziers1[i], yBeziers1[i]),
+      ...toCanvas(xBeziers2[i + 1], yBeziers2[i + 1]),
+      ...toCanvas(xCoordinates[i + 1], yCoordinates[i + 1]),
+    ])
+  }
+  return { startingPoint, result }
+}
+
 export default function Graph({ userFunctions }) {
   const initialWindow = { xMin: -5, xMax: 5 }
-  const [displayWindow, setDisplayWindow] = useState(initialWindow)
-  const [canvasDimens, setCanvasDimens] = useState({})
-  const [renderControl, setRenderControl] = useState(false)
+  const [canvasDimens, setCanvasDimens] = useState(initialWindow)
   const canvasRef = useRef(null)
   const settingsRef = useRef(null)
-  const windowRef = useRef(null)
   const canvasBounds = useResizeObserver(canvasRef)
-  const windowBounds = useResizeObserver(windowRef)
 
   const toggleSettings = () => {
     const settings = settingsRef.current
@@ -26,90 +74,115 @@ export default function Graph({ userFunctions }) {
   }
 
   const handleChange = ({ target }) => {
-    setDisplayWindow({ ...displayWindow, [target.name]: target.value })
+    setCanvasDimens({ ...canvasDimens, [target.id]: target.value })
   }
 
-  useEffect(() => {
-    setRenderControl(true)
-  }, [canvasBounds, displayWindow])
-
   useLayoutEffect(() => {
-    const validNumbers = Object.keys(displayWindow).reduce((acc, dimens) => {
-      acc[dimens] = Number(displayWindow[dimens])
-      if (displayWindow[dimens] === "") acc[dimens] = NaN
+    const validDimens = Object.keys(canvasDimens).reduce((acc, dimens) => {
+      acc[dimens] = Number(canvasDimens[dimens])
+      if (canvasDimens[dimens] === "") acc[dimens] = NaN
       return acc
     }, {})
-
-    if (renderControl && Object.values(validNumbers).every((dimens) => !isNaN(dimens))) {
+    if (Object.values(validDimens).every((dimens) => !isNaN(dimens))) {
+      const canvas = canvasRef.current
       const canvasWidth = canvasBounds.width
       const canvasHeight = canvasBounds.height
-      const aspectRatio = canvasWidth / canvasHeight
-      const conversion = (validNumbers.xMax - validNumbers.xMin) / windowBounds.width
-      if (windowBounds.width === 0) conversion = 0
+      const context = canvas.getContext("2d")
 
-      const xMin = validNumbers.xMin - conversion * windowBounds.left
-      const xMax = validNumbers.xMax + conversion * (canvasBounds.right - windowBounds.right)
+      canvas.setAttribute("width", `${canvasWidth}`)
+      canvas.setAttribute("height", `${canvasHeight}`)
+
+      const { xMin, xMax } = validDimens
+      const aspectRatio = canvasWidth / canvasHeight
       const yMin = -(xMax - xMin) / 2 / aspectRatio
       const yMax = (xMax - xMin) / 2 / aspectRatio
+      let percentX, percentY, funcX, funcY, pixelX, pixelY
 
-      setCanvasDimens({ xMin, xMax, yMin, yMax })
-      setRenderControl(false)
-    }
-  }, [renderControl, canvasBounds, displayWindow, windowBounds])
-
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current
-    const canvasWidth = canvasBounds.width
-    const canvasHeight = canvasBounds.height
-    const context = canvas.getContext("2d")
-
-    canvas.setAttribute("width", `${canvasWidth}`)
-    canvas.setAttribute("height", `${canvasHeight}`)
-
-    const { xMin, xMax, yMin, yMax } = canvasDimens
-    let percentX, percentY, funcX, funcY, pixelX, pixelY
-
-    const trees = userFunctions.map((func) => {
-      return (x) => createTree(parseInput(func)).evaluate({}, "x", [x, 0])
-    })
-
-    const derivatives = userFunctions.map((func) => {
-      return (x) =>
-        diff(createTree(parseInput(func)), createTree(parseInput("x"))).evaluate({}, "x", [x, 0])
-    })
-
-    if (trees) {
-      trees.forEach((tree, k) => {
+      if (xMin < 0 && xMax > 0) {
         context.beginPath()
-        context.strokeStyle = "black"
-        context.lineWidth = 2
-        const n = canvasWidth 
-        for (let i = 0; i < n; i ++) {
-          let bezX1, bezX2, bezY1, bezY2
-
-          try {
-            percentX = i / n
-            funcX = percentX * (xMax - xMin) + xMin
-            funcY = tree(funcX)[0]
-            percentY = (funcY - yMin) / (yMax - yMin)
-            pixelX = percentX * canvasWidth
-            pixelY = canvasHeight * (1 - percentY)
-
-
-
-
-          } catch {}
-          context.lineTo(pixelX, pixelY)
-        }
-        
-
+        context.strokeStyle = "grey"
+        context.lineWidth = 1
+        context.moveTo((-xMin * canvasWidth) / (xMax - xMin), 0)
+        context.lineTo((-xMin * canvasWidth) / (xMax - xMin), canvasHeight)
         context.stroke()
+      }
+
+      if (yMin < 0 && yMax > 0) {
+        context.beginPath()
+        context.strokeStyle = "grey"
+        context.lineWidth = 1
+        context.moveTo(0, (yMax * canvasHeight) / (yMax - yMin))
+        context.lineTo(canvasWidth, (yMax * canvasHeight) / (yMax - yMin))
+        context.stroke()
+      }
+
+      const trees = userFunctions.map((func) => {
+        return (x) => createTree(parseInput(func)).evaluate({}, "x", [x, 0])[0]
       })
+
+      const derivatives = userFunctions.map((func) => {
+        return (x) => {
+          const derivative = diff(createTree(parseInput(func)), createTree(parseInput("x")))
+          return derivative.evaluate({}, "x", [x, 0])[0]
+        }
+      })
+
+      if (trees) {
+        trees.forEach((tree, k) => {
+          context.beginPath()
+          context.strokeStyle = "black"
+          context.lineWidth = 2
+          const n = canvasWidth / 2
+
+          // const { startingPoint, result } = generateBezier(
+          //   xMin,
+          //   xMax,
+          //   yMin,
+          //   yMax,
+          //   canvasWidth,
+          //   canvasHeight,
+          //   n,
+          //   tree,
+          //   derivatives[k]
+          // )
+          // console.log(result)
+          // context.moveTo(...startingPoint)
+          // for (let i = 0; i < n; i++) {
+          //   context.bezierCurveTo(...result[i])
+          // }
+
+          for (let i = 0; i < n; i++) {
+            try {
+              percentX = i / n
+              funcX = percentX * (xMax - xMin) + xMin
+              funcY = tree(funcX)
+              percentY = (funcY - yMin) / (yMax - yMin)
+              pixelX = percentX * canvasWidth
+              pixelY = canvasHeight * (1 - percentY)
+            } catch {}
+            context.lineTo(pixelX, pixelY)
+          }
+          context.stroke()
+        })
+      }
     }
   }, [userFunctions, canvasBounds, canvasDimens])
 
+  const input = (id) => (
+    <input
+      onChange={handleChange}
+      type="text"
+      id={id}
+      spellCheck="false"
+      autoCorrect="off"
+      autoCapitalize="off"
+      autoComplete="off"
+      value={canvasDimens[id]}
+    />
+  )
+
   return (
-    <div ref={windowRef} className="window">
+    <div className="window">
       <div onClick={toggleSettings} className="settings">
         <img src="/assets/icons/sliders.svg" alt="show/hide" width="24" height="24" />
       </div>
@@ -119,9 +192,9 @@ export default function Graph({ userFunctions }) {
           <div>
             <MathJax inline>{`$x\\in[$`}</MathJax>
           </div>
-          <input onChange={handleChange} type="text" name="xMin" value={displayWindow.xMin} />
+          {input("xMin")}
           <div>,</div>
-          <input onChange={handleChange} type="text" name="xMax" value={displayWindow.xMax} />
+          {input("xMax")}
           <div>
             <MathJax inline>{`$]$`}</MathJax>
           </div>
@@ -130,15 +203,15 @@ export default function Graph({ userFunctions }) {
           <div>
             <MathJax inline>{`$y\\in[$`}</MathJax>
           </div>
-          <input onChange={handleChange} type="text" name="yMin" value={displayWindow.yMin} />
+          {input("yMin")}
           <div>,</div>
-          <input onChange={handleChange} type="text" name="yMax" value={displayWindow.yMax} />
+          {input("yMax")}
           <div>
             <MathJax inline>{`$]$`}</MathJax>
           </div>
         </div>
         <div className="window-settings-square">
-          <input type="checkbox" name="square" />
+          <input type="checkbox" id="square" />
           <span>Square</span>
         </div>
       </div>
