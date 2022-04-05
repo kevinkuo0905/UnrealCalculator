@@ -1,6 +1,5 @@
 /**
- * Differentiation rules.
- * TODO: arccsc, arcsec, arccot
+ * Differentiation rules. Used for generating Bezier curves and analysis.
  */
 
 import { FunctionError, DomainError } from "./Errors.mjs"
@@ -22,7 +21,7 @@ export default function differentiate(tree) {
       throw new FunctionError(`Function: ${name} is not differentiable.`)
     return differentiate(evaluation)
   }
-  if (name !== "identity")
+  if (name !== "identity") {
     tree.args = tree.args.map((arg) => {
       if (!rules[arg.operation.name]) {
         if (arg.isNumber()) return newC(arg.evaluate())
@@ -30,6 +29,7 @@ export default function differentiate(tree) {
       }
       return arg
     })
+  }
   return rules[name](tree)
 }
 
@@ -176,6 +176,33 @@ const rules = {
   arctan: ({ args: [arg] }) => {
     return newExp("divide", [
       differentiate(arg),
+      newExp("add", [newC([1, 0]), newExp("multiply", [arg, arg])]),
+    ])
+  },
+
+  arccsc: ({ args: [arg] }) => {
+    return newExp("divide", [
+      newExp("multiply", [newC([-1, 0]), differentiate(arg)]),
+      newExp("multiply", [
+        newExp("sqrt", [newExp("subtract", [newExp("multiply", [arg, arg]), newC([1, 0])])]),
+        newExp("abs", [arg]),
+      ]),
+    ])
+  },
+
+  arcsec: ({ args: [arg] }) => {
+    return newExp("divide", [
+      differentiate(arg),
+      newExp("multiply", [
+        newExp("sqrt", [newExp("subtract", [newExp("multiply", [arg, arg]), newC([1, 0])])]),
+        newExp("abs", [arg]),
+      ]),
+    ])
+  },
+
+  arccot: ({ args: [arg] }) => {
+    return newExp("divide", [
+      newExp("multiply", [newC([-1, 0]), differentiate(arg)]),
       newExp("add", [newC([1, 0]), newExp("multiply", [arg, arg])]),
     ])
   },

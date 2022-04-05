@@ -41,10 +41,10 @@ export default function Panels({ children, config }) {
     const firstButton = firstButtonRef.current
     const secondButton = secondButtonRef.current
 
-    if (autoRotate) {
-      setVertical(container.clientHeight / container.clientWidth > 1)
+    if (autoRotate) {      
       first.style[vertical ? "width" : "height"] = "100%"
       second.style[vertical ? "width" : "height"] = "100%"
+      setVertical(container.clientHeight / container.clientWidth > 1)
     }
 
     let containerDimens = vertical ? container.clientHeight : container.clientWidth
@@ -163,8 +163,10 @@ export default function Panels({ children, config }) {
 
     if (alwaysShowFirst && first.style[orientation] !== "100%") {
       firstButton.style.display = "none"
+      secondButton.style.display = ""
     }
     if (alwaysShowSecond && second.style[orientation] !== "100%") {
+      firstButton.style.display = ""
       secondButton.style.display = "none"
     }
 

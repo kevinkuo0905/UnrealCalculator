@@ -239,14 +239,11 @@ export default function FunctionsList({ userFunctions, functionDispatcher }) {
           onChange={handleChange}
           onKeyDown={({ key }) => keyEvents[key] && keyEvents[key]()}
           type="text"
-          id="user-input"
-          name="user-input"
           placeholder="Input"
-          autoFocus
           spellCheck="false"
-          autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
+          autoComplete="off"
           value={userInput}
         />
         <div onClick={keyEvents["Enter"]} className="return">

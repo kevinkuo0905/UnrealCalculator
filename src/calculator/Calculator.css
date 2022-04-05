@@ -36,7 +36,8 @@
   transition: transform 0.2s;
 }
 
-div.output > span:last-child {
+.output > span:last-child {
+  padding-top:5px;
   align-self: end;
 }
 
